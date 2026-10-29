@@ -1,0 +1,54 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches & Checkpoints
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+.pytest_cache/
+checkpoints/
+
+# Virtual Environments
+venv/
+env/
+.env
+
+# IDE & OS files
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Word documents except official research plan in plans/
+~$*
+*~
+*.docx
+*.doc
+!plans/*.docx
+plans/~$*
+
+# Model weights
+*.pt
+*.pth
+*.onnx
+
+# Raw image dataset (254MB - extract from data.zip locally)
+data/raw/signatures/full_org/
+data/raw/signatures/full_forg/
+!data/raw/signatures/Readme.txt
+
+# ==============================================================================
+# Work In Progress: Tuần 2 - 4 (Lưu trữ cục bộ tại máy, chưa đẩy lên GitHub)
+# ==============================================================================
+notebooks/02_pretrained_transfer_learning.ipynb
+notebooks/03_losses_metrics_and_gradcam.ipynb
+notebooks/04_production_benchmark.ipynb
+reports/WEEK04_Final_Technical_Report.md
+src/models.py
+src/losses.py
+src/metrics.py
+src/trainer.py
+src/explainability.py
