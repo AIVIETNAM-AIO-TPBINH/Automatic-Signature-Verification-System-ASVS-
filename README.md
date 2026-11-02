@@ -14,7 +14,7 @@ Nghiên cứu thực nghiệm đối chứng về chuyển giao tri thức và t
 ## 📅 Tiến Độ Thực Hiện (Project Roadmap)
 
 - [x] **Tuần 1: Khám Phá Dữ Liệu Ảnh (Image EDA), Kiểm Chứng Rò Rỉ & Pipeline Tiền Xử Lý 3 Kênh**
-  - [x] Phân tích hình thái nét chữ, tỷ lệ khung hình & mật độ nét mực (*Ink Density Ratio*).
+  - [x] Phân tích hình thái nét chữ, tỷ lệ khung hình & kiểm chứng lượng mực thực tế (*Ink Density Bias & BBox Verification*).
   - [x] Kiểm toán rò rỉ danh tính (**Zero Identity Leakage**): 38 người Train (20,976 cặp), 8 người Val (4,416 cặp), 9 người Test (4,968 cặp).
   - [x] Xây dựng bộ lá chắn tiền xử lý (*Preprocessing Shield*): Khử nền giấy Otsu $\to$ Auto-crop Bounding Box $\to$ Resize đệm viền $224 \times 224$.
   - [x] Biểu diễn hiệu số 3 kênh: $\mathbf{X}_{\text{input}} = \text{Concat}(I_{\text{ref}}, I_{\text{query}}, |I_{\text{ref}} - I_{\text{query}}|)$.

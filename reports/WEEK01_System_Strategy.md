@@ -10,7 +10,21 @@
 
 ---
 
-### 2. Kiểm Chứng Bẫy Rò Rỉ Danh Tính (Identity Leakage Audit)
+### 2. Phân Tích Hình Thái Nét Chữ & Giải Mã Ảo Giác Mật Độ Mực (Ink Density Bias)
+- **Thực nghiệm đo đạc & Hiện tượng ảo giác:**
+  - Nếu chỉ tính mật độ mực thô trên toàn khung canvas ($\text{Density}_{\text{raw}} = \frac{\text{Số pixel mực}}{W \times H}$), chữ ký giả mạo cho kết quả trung bình $5.50\%$ so với $4.36\%$ của chữ ký thật (chênh lệch bề ngoài lên đến $+26.05\%$).
+  - **Bản chất kỹ thuật:** Đây là **ảo giác đo lường do khung quét ảnh** (Canvas Size Optical Illusion). Trong bộ dữ liệu CEDAR, các ảnh giả mạo có chiều cao trung bình bị cắt ngắn hơn hẳn ($303.3$ px so với $383.3$ px của ảnh thật), dẫn đến diện tích khung mẫu số nhỏ hơn đáng kể.
+- **Kiểm chứng Định lượng Khách quan:**
+  - **Số điểm mực tuyệt đối (Absolute Ink Pixels):** Chữ ký thật đạt trung bình $10,076.2$ px; chữ ký giả đạt $10,226.4$ px. Chênh lệch thực tế chỉ vỏn vẹn **+1.49%** (hoàn toàn tương đồng).
+  - **Mật độ mực trong Bounding Box sát nét chữ:** Sau khi cắt bỏ toàn bộ lề giấy thừa, mật độ nét bút của chữ ký thật là $6.86\%$, chữ ký giả là $6.99\%$ (chênh lệch **+1.87%**).
+  - **Kết luận khoa học:** Bác bỏ giả thuyết suy diễn cho rằng "người giả mạo tì mạnh ngòi bút làm nét đọng mực nhiều hơn". Nét mực thực tế của chữ ký thật và chữ ký giả mạo có cùng đặc tính vật lý.
+- **Minh chứng cho tính cấp thiết của Preprocessing Shield:**
+  - Sai lệch viền giấy chứng minh rằng nếu nạp trực tiếp ảnh thô vào mạng nơ-ron, mô hình sẽ bị bẫy *Shortcut Learning* (học đặc trưng lề giấy thay vì nét chữ).
+  - Do đó, bước **Auto-crop Bounding Box** và **Resize bảo toàn tỷ lệ khung hình** trong Preprocessing Shield là chốt chặn tiên quyết để chuẩn hóa dữ liệu đầu vào.
+
+---
+
+### 3. Kiểm Chứng Bẫy Rò Rỉ Danh Tính (Identity Leakage Audit)
 - **Bẫy Random Split:** Nếu trộn lẫn 30,360 cặp chữ ký rồi chia ngẫu nhiên thành Train/Val/Test, mẫu chữ ký của cùng một người sẽ xuất hiện ở cả tập Train lẫn tập Test. Mô hình sẽ học thuộc lòng hình dạng của chữ ký cụ thể thay vì học quy luật tổng quát để phân biệt nét bút thật và nét bút giả.
 - **Chiến lược Phân tách Độc lập theo Người ký (Writer-Independent Split):**
   - **Tập Train (38 chủ tài khoản, ID 01 – 38):** 20,976 cặp ảnh (10,488 cặp Thật–Thật, 10,488 cặp Thật–Giả).
@@ -20,7 +34,7 @@
 
 ---
 
-### 3. Quy Trình Tiền Xử Lý Hình Thái & Biểu Diễn 3 Kênh (3-Channel Stacking)
+### 4. Quy Trình Tiền Xử Lý Hình Thái & Biểu Diễn 3 Kênh (3-Channel Stacking)
 Để loại bỏ nhiễu nền giấy và tái sử dụng trọng số ImageNet Pretrained mà không phá vỡ cấu trúc input 3 kênh RGB:
 1. **Khử nền giấy bằng thuật toán Otsu:** Xác định ngưỡng nhị phân tự động tách mực viết khỏi sợi giấy và nền màu.
 2. **Auto-crop Bounding Box:** Tự động cắt sát biên các nét chữ có mực, loại bỏ lề giấy dư thừa.
@@ -33,10 +47,9 @@
 
 ---
 
-### 4. Tăng Cường Dữ Liệu Hợp Lệ (Data Augmentation)
+### 5. Tăng Cường Dữ Liệu Hợp Lệ (Data Augmentation)
 - Sử dụng phép biến đổi Afin ngẫu nhiên nhẹ (`RandomAffine`):
   - Xoay nhẹ nét bút $\pm 5^\circ$
   - Co giãn nhẹ $0.95 \to 1.05$
   - Dịch chuyển nhẹ $\pm 3\%$
 - **Nghiêm cấm lật ngang (Horizontal Flip) hoặc lật dọc (Vertical Flip)** vì làm phá vỡ chiều viết tự nhiên và ngữ nghĩa của nét chữ ký.
-
