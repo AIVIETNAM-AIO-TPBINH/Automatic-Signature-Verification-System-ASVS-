@@ -41,14 +41,10 @@ data/raw/signatures/full_forg/
 !data/raw/signatures/Readme.txt
 
 # ==============================================================================
-# Work In Progress: Tuần 2 - 4 (Lưu trữ cục bộ tại máy, chưa đẩy lên GitHub)
+# Work In Progress: Tuần 3 - 4 (Lưu trữ cục bộ tại máy, giữ nguyên trên máy local)
 # ==============================================================================
-notebooks/02_pretrained_transfer_learning.ipynb
 notebooks/03_losses_metrics_and_gradcam.ipynb
 notebooks/04_production_benchmark.ipynb
 reports/WEEK04_Final_Technical_Report.md
-src/models.py
-src/losses.py
 src/metrics.py
-src/trainer.py
 src/explainability.py
