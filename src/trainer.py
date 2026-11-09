@@ -66,7 +66,10 @@ class SignatureTrainer:
 
         # Automatic Mixed Precision for Colab GPU speedup
         self.use_amp = use_amp and (self.device.type == "cuda")
-        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
+        if hasattr(torch, "amp") and hasattr(torch.amp, "GradScaler"):
+            self.scaler = torch.amp.GradScaler("cuda", enabled=self.use_amp)
+        else:
+            self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
 
         self.history: Dict[str, List[float]] = {
             "train_loss": [],
@@ -80,6 +83,11 @@ class SignatureTrainer:
         self.best_val_eer = float("inf")
         self.best_checkpoint_path = os.path.join(self.checkpoint_dir, f"{self.model_name}_best.pt")
 
+    def _get_autocast_context(self):
+        if hasattr(torch, "amp") and hasattr(torch.amp, "autocast"):
+            return torch.amp.autocast("cuda", enabled=self.use_amp)
+        return torch.cuda.amp.autocast(enabled=self.use_amp)
+
     def train_epoch(self) -> Tuple[float, float]:
         self.model.train()
         total_loss = 0.0
@@ -91,7 +99,7 @@ class SignatureTrainer:
             labels = batch["label"].to(self.device)
 
             self.optimizer.zero_grad()
-            with torch.cuda.amp.autocast(enabled=self.use_amp):
+            with self._get_autocast_context():
                 logits = self.model(images)
                 loss = self.loss_fn(logits, labels)
 
@@ -127,7 +135,7 @@ class SignatureTrainer:
             images = batch["image"].to(self.device)
             labels = batch["label"].to(self.device)
 
-            with torch.cuda.amp.autocast(enabled=self.use_amp):
+            with self._get_autocast_context():
                 logits = self.model(images)
                 loss = self.loss_fn(logits, labels)
 

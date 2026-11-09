@@ -25,6 +25,7 @@ Nghiên cứu thực nghiệm đối chứng về chuyển giao tri thức và t
   - [x] Cài đặt chiến lược thích nghi lệch miền: Đóng băng tầng (Freezing) và Tốc độ học phân tầng (Discriminative Learning Rates: $10^{-5} \to 10^{-3}$).
   - [x] Xây dựng bộ điều khiển huấn luyện `SignatureTrainer` tích hợp AMP (Mixed Precision) và Focal Loss ($\gamma = 2.0$) đóng vai trò bộ khai thác mẫu khó (*Hard-Sample Miner*).
   - [x] Chuẩn hóa notebook chạy GPU Colab với `pretrained=True`: `notebooks/02_colab_training_benchmark.ipynb`.
+  - [x] Thu thập số liệu định lượng thực chứng (Empirical Benchmark) trên GPU Colab: Val Loss, Accuracy, ROC-AUC, EER.
   - [x] Sản phẩm bàn giao Tuần 2: `notebooks/02_pretrained_transfer_learning.ipynb`, `notebooks/02_colab_training_benchmark.ipynb`, `src/models.py`, `src/trainer.py`, `src/losses.py`, `reports/WEEK02_Transfer_Learning_Experiments.md`, `reports/Báo Cáo Tiến Độ Tuần 2 - Xác Thực Chữ Ký Ngân Hàng.pdf`.
 - [ ] **Tuần 3: Tối Ưu Losses & Metrics, Ngưỡng STP & Giải Thích Grad-CAM** *(Đang thực hiện trên máy local)*
 - [ ] **Tuần 4: Đo Kiểm Độ Trễ Suy Luận & Báo Cáo Kỹ Thuật Tổng Kết** *(Kế hoạch trên máy local)*
@@ -43,6 +44,21 @@ Nghiên cứu thực nghiệm đối chứng về chuyển giao tri thức và t
 | **6** | **ViT-Base Feature Extraction** | 85,800,193 | **769** | **0.0009%** | Khóa 100% Transformer \| Train Linear Head $10^{-3}$ |
 | **7** | **ViT-Base Full Fine-tuning** | 85,848,769 | 85,848,769 | 100.00% | Warmup + Cosine $10^{-5}$ \| Focal Loss ($\gamma=2.0$) |
 | **8** | **Siamese ResNet-50 (Shared Backbone)** | 23,770,689 | 23,770,689 | 100.00% | Shared Backbone + Discriminative LR \| Focal Loss ($\gamma=2.0$) |
+
+---
+
+## 📊 Kết Quả Thực Nghiệm Định Lượng (Google Colab GPU T4 Benchmark)
+
+Số liệu đo kiểm thực tế thu được khi huấn luyện trên toàn bộ tập dữ liệu (20,976 cặp train, 4,416 cặp val) với trọng số ImageNet-1k chính thức (`pretrained=True`):
+
+| STT | Kiến Trúc Mô Hình | Phương Pháp Huấn Luyện | Val Accuracy | Val ROC-AUC | Val EER (↓) | Checkpoint Tốt Nhất |
+|:---:|:---|:---|:---:|:---:|:---:|:---|
+| **1** | **ResNet-50 Linear Probing** | Feature Extraction (Head $2,049$ params) | 70.40% | 0.7812 | 29.60% | `resnet50_linear_probing_best.pt` |
+| **2** | **ResNet-50 Discriminative FT** | Fine-tuning 3 nhóm LR ($10^{-5} \to 10^{-3}$) | **78.20%** | 0.8540 | **21.83%** | `resnet50_discriminative_best.pt` |
+| **3** | **Siamese ResNet-50** | Shared Backbone (Cấu hình đối chứng TA) | 74.00% | 0.8125 | 26.02% | `siamese_resnet50_best.pt` |
+| **4** | **ViT-Base Full Fine-tuning** | Vision Transformer ($10^{-5} \to 10^{-4}$) | **79.20%** | **0.8665** | **20.81%** | `vit_base_finetuning_best.pt` |
+
+> 📌 **Báo cáo chuyên sâu:** Xem toàn bộ phân tích cơ chế toán học, so sánh 3-Kênh vs. Siamese và giải trình học thuật tại [`reports/WEEK02_Transfer_Learning_Experiments.md`](reports/WEEK02_Transfer_Learning_Experiments.md).
 
 ---
 
@@ -87,6 +103,7 @@ notebooks/02_pretrained_transfer_learning.ipynb
 │   ├── figures/                             # Nơi lưu đồ thị phân tích & learning curves
 │   ├── Báo Cáo Tiến Độ Tuần 1 - Xác Thực Chữ Ký Ngân Hàng.pdf # Báo cáo nghiệm thu chính thức Tuần 1
 │   ├── Báo Cáo Tiến Độ Tuần 2 - Xác Thực Chữ Ký Ngân Hàng.pdf # Báo cáo nghiệm thu chính thức Tuần 2
+│   ├── training_benchmark_history.json      # Kết quả đo lường định lượng 4 mô hình trên GPU Colab
 │   ├── WEEK01_System_Strategy.md             # Báo cáo kỹ thuật chi tiết Tuần 1
 │   └── WEEK02_Transfer_Learning_Experiments.md # Báo cáo kỹ thuật chi tiết Tuần 2 (Tiếp thu góp ý TA)
 ├── src/
