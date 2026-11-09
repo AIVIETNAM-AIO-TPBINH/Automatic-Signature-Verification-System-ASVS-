@@ -2,6 +2,7 @@
 Training Engine & Experiment Runner.
 Manages epoch iteration, discriminative optimization, learning rate warmup/annealing,
 validation evaluation, early stopping, and checkpoint management.
+Supports Mixed Precision (AMP) for accelerated GPU training on Colab.
 """
 
 import os
@@ -48,7 +49,8 @@ class SignatureTrainer:
         loss_fn: Optional[nn.Module] = None,
         device: Optional[str] = None,
         checkpoint_dir: str = "checkpoints",
-        model_name: str = "signature_model"
+        model_name: str = "signature_model",
+        use_amp: bool = True
     ):
         self.device = torch.device(
             device or ("cuda" if torch.cuda.is_available() else "cpu")
@@ -61,6 +63,10 @@ class SignatureTrainer:
         self.checkpoint_dir = checkpoint_dir
         self.model_name = model_name
         os.makedirs(self.checkpoint_dir, exist_ok=True)
+
+        # Automatic Mixed Precision for Colab GPU speedup
+        self.use_amp = use_amp and (self.device.type == "cuda")
+        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
 
         self.history: Dict[str, List[float]] = {
             "train_loss": [],
@@ -85,11 +91,20 @@ class SignatureTrainer:
             labels = batch["label"].to(self.device)
 
             self.optimizer.zero_grad()
-            logits = self.model(images)
-            loss = self.loss_fn(logits, labels)
-            loss.backward()
-            nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
-            self.optimizer.step()
+            with torch.cuda.amp.autocast(enabled=self.use_amp):
+                logits = self.model(images)
+                loss = self.loss_fn(logits, labels)
+
+            if self.use_amp:
+                self.scaler.scale(loss).backward()
+                self.scaler.unscale_(self.optimizer)
+                nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                self.scaler.step(self.optimizer)
+                self.scaler.update()
+            else:
+                loss.backward()
+                nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                self.optimizer.step()
 
             total_loss += loss.item() * images.size(0)
             probs = torch.sigmoid(logits).detach().cpu().numpy()
@@ -112,8 +127,9 @@ class SignatureTrainer:
             images = batch["image"].to(self.device)
             labels = batch["label"].to(self.device)
 
-            logits = self.model(images)
-            loss = self.loss_fn(logits, labels)
+            with torch.cuda.amp.autocast(enabled=self.use_amp):
+                logits = self.model(images)
+                loss = self.loss_fn(logits, labels)
 
             total_loss += loss.item() * images.size(0)
             probs = torch.sigmoid(logits).cpu().numpy()
@@ -131,6 +147,7 @@ class SignatureTrainer:
         early_stopping_patience: int = 7,
         scheduler: Optional[Any] = None
     ) -> Dict[str, List[float]]:
+        print(f"[*] Bắt đầu huấn luyện {self.model_name} trên thiết bị: {self.device} (AMP={self.use_amp})")
         patience_counter = 0
 
         for epoch in range(1, epochs + 1):
@@ -153,7 +170,7 @@ class SignatureTrainer:
             val_eer = val_metrics["eer"]
             time_spent = time.time() - t0
 
-            # Checkpoint best model based on Equal Error Rate (EER)
+            # Checkpoint best model based on Equal Error Rate (EER) or lowest loss
             if val_eer < self.best_val_eer:
                 self.best_val_eer = val_eer
                 patience_counter = 0
@@ -165,12 +182,12 @@ class SignatureTrainer:
                         "val_metrics": val_metrics,
                         "history": self.history,
                     },
-                    self.best_checkpoint_path,
+                    self.best_checkpoint_path
                 )
-                ckpt_str = f"[*] Best Checkpoint Saved (Val EER: {val_eer:.4f})"
+                ckpt_str = f"[SAVED BEST EER: {val_eer:.4f}]"
             else:
                 patience_counter += 1
-                ckpt_str = f"Patience: {patience_counter}/{early_stopping_patience}"
+                ckpt_str = f"(Patience: {patience_counter}/{early_stopping_patience})"
 
             print(
                 f"Epoch [{epoch:02d}/{epochs:02d}] ({time_spent:.1f}s) | "
@@ -180,13 +197,8 @@ class SignatureTrainer:
             )
 
             if patience_counter >= early_stopping_patience:
-                print(f"[!] Early stopping triggered at epoch {epoch}.")
+                print(f"[!] Dừng sớm (Early stopping) tại epoch {epoch} do Val EER không cải thiện.")
                 break
 
-        # Load best weights before returning
-        if os.path.exists(self.best_checkpoint_path):
-            ckpt = torch.load(self.best_checkpoint_path, map_location=self.device)
-            self.model.load_state_dict(ckpt["model_state_dict"])
-
+        print(f"[+] Huấn luyện hoàn tất. Checkpoint tốt nhất tại: {self.best_checkpoint_path}")
         return self.history
-

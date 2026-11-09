@@ -1,6 +1,6 @@
 # Automated Banking Signature Verification System
 
-Nghiên cứu thực nghiệm đối chứng về chuyển giao tri thức và thích nghi lệch miền (**Domain Adaptation**) sử dụng **Pretrained CNN (ResNet-50)** và **Vision Transformer (ViT-Base)** trên bộ dữ liệu chuẩn quốc tế CEDAR Signature Dataset (55 chủ tài khoản, 30,360 cặp đối chiếu).
+Nghiên cứu thực nghiệm đối chứng về chuyển giao tri thức và thích nghi lệch miền (**Domain Adaptation**) sử dụng **Pretrained CNN (ResNet-50)**, **Vision Transformer (ViT-Base)** và **Siamese Network** trên bộ dữ liệu chuẩn quốc tế CEDAR Signature Dataset (55 chủ tài khoản, 30,360 cặp đối chiếu).
 
 ---
 
@@ -20,27 +20,29 @@ Nghiên cứu thực nghiệm đối chứng về chuyển giao tri thức và t
   - [x] Biểu diễn hiệu số 3 kênh: $\mathbf{X}_{\text{input}} = \text{Concat}(I_{\text{ref}}, I_{\text{query}}, |I_{\text{ref}} - I_{\text{query}}|)$.
   - [x] Tăng cường dữ liệu `RandomAffine` nhẹ (bảo toàn hướng nét chữ, không lật).
   - [x] Sản phẩm bàn giao Tuần 1: `reports/WEEK01_System_Strategy.md`, `reports/Báo Cáo Tiến Độ Tuần 1 - Xác Thực Chữ Ký Ngân Hàng.pdf`, `src/preprocessing.py`, `src/dataset.py`, `notebooks/01_eda_and_image_pipeline.ipynb`.
-- [x] **Tuần 2: Thực Nghiệm Chuyển Giao Tri Thức (Reusing Pretrained Models) & Ma Trận 7 Cấu Hình**
-  - [x] Thiết lập và đóng gói toàn bộ ma trận 7 cấu hình thực nghiệm đối chứng từ MLP Baseline, Custom CNN đến Pretrained CNN (ResNet-50) và Vision Transformer (ViT-Base).
+- [x] **Tuần 2: Thực Nghiệm Chuyển Giao Tri Thức (Reusing Pretrained Models) & Ma Trận 8 Cấu Hình**
+  - [x] Thiết lập và đóng gói toàn bộ ma trận 8 cấu hình thực nghiệm đối chứng từ MLP Baseline, Custom CNN đến Pretrained CNN (ResNet-50), Vision Transformer (ViT-Base) và Siamese Network (đối chứng kinh điển theo góp ý của TA).
   - [x] Cài đặt chiến lược thích nghi lệch miền: Đóng băng tầng (Freezing) và Tốc độ học phân tầng (Discriminative Learning Rates: $10^{-5} \to 10^{-3}$).
-  - [x] Xây dựng bộ điều khiển huấn luyện `SignatureTrainer` tích hợp Early Stopping và Focal Loss ($\gamma = 2.0$) xử lý mẫu giả mạo tinh vi (*Skilled Forgeries*).
-  - [x] Sản phẩm bàn giao Tuần 2: `notebooks/02_pretrained_transfer_learning.ipynb`, `src/models.py`, `src/trainer.py`, `src/losses.py`, `reports/WEEK02_Transfer_Learning_Experiments.md`, `reports/Báo Cáo Tiến Độ Tuần 2 - Xác Thực Chữ Ký Ngân Hàng.pdf`.
+  - [x] Xây dựng bộ điều khiển huấn luyện `SignatureTrainer` tích hợp AMP (Mixed Precision) và Focal Loss ($\gamma = 2.0$) đóng vai trò bộ khai thác mẫu khó (*Hard-Sample Miner*).
+  - [x] Chuẩn hóa notebook chạy GPU Colab với `pretrained=True`: `notebooks/02_colab_training_benchmark.ipynb`.
+  - [x] Sản phẩm bàn giao Tuần 2: `notebooks/02_pretrained_transfer_learning.ipynb`, `notebooks/02_colab_training_benchmark.ipynb`, `src/models.py`, `src/trainer.py`, `src/losses.py`, `reports/WEEK02_Transfer_Learning_Experiments.md`, `reports/Báo Cáo Tiến Độ Tuần 2 - Xác Thực Chữ Ký Ngân Hàng.pdf`.
 - [ ] **Tuần 3: Tối Ưu Losses & Metrics, Ngưỡng STP & Giải Thích Grad-CAM** *(Đang thực hiện trên máy local)*
 - [ ] **Tuần 4: Đo Kiểm Độ Trễ Suy Luận & Báo Cáo Kỹ Thuật Tổng Kết** *(Kế hoạch trên máy local)*
 
 ---
 
-## 🔬 Ma Trận 7 Cấu Hình Đối Chứng (Tuần 2)
+## 🔬 Ma Trận 8 Cấu Hình Đối Chứng (Tuần 2)
 
 | STT | Cấu Hình Thử Nghiệm | Tổng Tham Số | Tham Số Huấn Luyện | Tỷ Lệ Trainable | Chiến Lược Tốc Độ Học & Hàm Loss |
 |:---:|:---|:---:|:---:|:---:|:---|
 | **1** | **MLP Baseline** (Duỗi phẳng 2D) | 100,664,833 | 100,664,833 | 100.00% | Cố định $10^{-3}$ \| BCE Loss |
 | **2** | **Custom 2D-CNN** (4 Blocks) | 3,842,433 | 3,842,433 | 100.00% | Cosine Annealing $10^{-3}$ \| BCE Loss |
-| **3** | **ResNet-50 Feature Extraction** | 23,510,081 | 2,049 | 0.01% | Khóa 100% Backbone \| Train Head $10^{-3}$ |
-| **4** | **ResNet-50 Partial Freezing** | 23,510,081 | 21,348,353 | 90.81% | Khóa Stage 1–2, Mở Stage 3–4 \| $10^{-4}$ |
-| **5** | **ResNet-50 Discriminative FT** | 23,510,081 | 23,510,081 | 100.00% | Phân tầng 3 nhóm ($10^{-5} \to 10^{-3}$) \| Focal Loss ($\gamma=2.0$) |
-| **6** | **ViT-Base Feature Extraction** | 85,800,193 | 769 | 0.001% | Khóa 100% Transformer \| Train Head $10^{-3}$ |
-| **7** | **ViT-Base Full Fine-tuning** | 85,800,193 | 85,800,193 | 100.00% | Warmup + Cosine $10^{-5}$ \| Focal Loss ($\gamma=2.0$) |
+| **3** | **ResNet-50 Feature Extraction** | 23,510,081 | **2,049** | **0.009%** | Khóa 100% Backbone \| Train Linear Head $10^{-3}$ |
+| **4** | **ResNet-50 Partial Freezing** | 23,770,689 | 21,608,961 | 90.91% | Khóa Stage 1–2, Mở Stage 3–4 \| $10^{-4}$ |
+| **5** | **ResNet-50 Discriminative FT** | 23,770,689 | 23,770,689 | 100.00% | Phân tầng 3 nhóm ($10^{-5} \to 10^{-3}$) \| Focal Loss ($\gamma=2.0$) |
+| **6** | **ViT-Base Feature Extraction** | 85,800,193 | **769** | **0.0009%** | Khóa 100% Transformer \| Train Linear Head $10^{-3}$ |
+| **7** | **ViT-Base Full Fine-tuning** | 85,848,769 | 85,848,769 | 100.00% | Warmup + Cosine $10^{-5}$ \| Focal Loss ($\gamma=2.0$) |
+| **8** | **Siamese ResNet-50 (Shared Backbone)** | 23,770,689 | 23,770,689 | 100.00% | Shared Backbone + Discriminative LR \| Focal Loss ($\gamma=2.0$) |
 
 ---
 
@@ -50,15 +52,17 @@ Nghiên cứu thực nghiệm đối chứng về chuyển giao tri thức và t
 # 1. Cài đặt các thư viện phụ thuộc
 pip install -r requirements.txt
 
-# 2. Khởi chạy Jupyter Lab
+# 2. Khởi chạy Jupyter Lab / Notebook trên máy local:
 jupyter lab
 
-# 3. Mở và chạy các notebook theo tiến độ:
 # Tuần 1: EDA, Kiểm toán rò rỉ và Preprocessing Shield
 notebooks/01_eda_and_image_pipeline.ipynb
 
-# Tuần 2: Ma trận 7 mô hình, Discriminative LR và Trainer
+# Tuần 2: Thẩm định kiến trúc & tham số mô hình
 notebooks/02_pretrained_transfer_learning.ipynb
+
+# 3. Huấn luyện toàn bộ thực nghiệm định lượng trên Google Colab GPU (T4):
+# Mở file notebooks/02_colab_training_benchmark.ipynb trên Colab và bấm "Run All".
 ```
 
 ---
@@ -75,22 +79,23 @@ notebooks/02_pretrained_transfer_learning.ipynb
 │       └── test_pairs.csv                   # 4,968 cặp (ID 47 -> 55)
 ├── notebooks/
 │   ├── 01_eda_and_image_pipeline.ipynb      # Phân tích EDA, kiểm toán rò rỉ & Preprocessing Shield (Tuần 1)
-│   └── 02_pretrained_transfer_learning.ipynb # Ma trận 7 mô hình & Transfer Learning (Tuần 2)
+│   ├── 02_pretrained_transfer_learning.ipynb # Ma trận 8 mô hình & kiểm định tham số (Tuần 2)
+│   └── 02_colab_training_benchmark.ipynb    # Huấn luyện GPU Colab (Pretrained=True, Learning Curves)
 ├── plans/
 │   └── KẾ HOẠCH NGHIÊN CỨU.docx             # Kế hoạch nghiên cứu 4 tuần chính thức
 ├── reports/
-│   ├── figures/                             # Nơi lưu đồ thị phân tích
+│   ├── figures/                             # Nơi lưu đồ thị phân tích & learning curves
 │   ├── Báo Cáo Tiến Độ Tuần 1 - Xác Thực Chữ Ký Ngân Hàng.pdf # Báo cáo nghiệm thu chính thức Tuần 1
 │   ├── Báo Cáo Tiến Độ Tuần 2 - Xác Thực Chữ Ký Ngân Hàng.pdf # Báo cáo nghiệm thu chính thức Tuần 2
 │   ├── WEEK01_System_Strategy.md             # Báo cáo kỹ thuật chi tiết Tuần 1
-│   └── WEEK02_Transfer_Learning_Experiments.md # Báo cáo kỹ thuật chi tiết Tuần 2
+│   └── WEEK02_Transfer_Learning_Experiments.md # Báo cáo kỹ thuật chi tiết Tuần 2 (Tiếp thu góp ý TA)
 ├── src/
 │   ├── __init__.py
 │   ├── dataset.py                           # PyTorch Dataset & DataLoader phân tách Writer-Independent
 │   ├── preprocessing.py                     # Otsu binarization, bbox crop, padding resize, 3-ch stack
-│   ├── models.py                            # 7 cấu hình mô hình, Freezing & Discriminative LR groups
-│   ├── trainer.py                           # Bộ điều khiển huấn luyện SignatureTrainer & Early Stopping
-│   ├── losses.py                            # Focal Loss, Label Smoothing BCE & Binary Cross Entropy
+│   ├── models.py                            # 8 cấu hình mô hình (Linear/MLP heads, Siamese ResNet-50)
+│   ├── trainer.py                           # SignatureTrainer tích hợp AMP & Early Stopping
+│   ├── losses.py                            # Focal Loss (Hard-Sample Miner), Label Smoothing & BCE
 │   └── utils.py                             # Tiện ích cố định seed, device auto-detect & I/O
 ├── .gitignore                               # Cấu hình bảo toàn mã nguồn Tuần 3 & 4 trên máy local
 ├── requirements.txt
