@@ -94,13 +94,32 @@ class CEDARSignatureDataset(Dataset):
 
     def _resolve_path(self, path_str: str) -> str:
         # Normalize Windows / POSIX slashes
-        norm_path = path_str.replace("\\", os.sep).replace("/", os.sep)
-        if os.path.exists(norm_path):
-            return norm_path
-        if self.data_root:
-            combined = os.path.join(self.data_root, norm_path)
-            if os.path.exists(combined):
-                return combined
+        norm_path = path_str.replace("\\", "/").strip()
+        candidates = [
+            norm_path,
+            os.path.normpath(norm_path),
+            os.path.join(self.data_root, norm_path) if self.data_root else None,
+        ]
+        # Common Colab unzipping variations
+        if norm_path.startswith("data/raw/"):
+            sub_path = norm_path[len("data/raw/"):] # e.g. signatures/full_org/...
+            candidates.extend([
+                sub_path,
+                os.path.normpath(sub_path),
+                f"/content/{sub_path}",
+                f"/content/Automatic-Signature-Verification-System-ASVS-/{sub_path}",
+            ])
+        if norm_path.startswith("data/"):
+            sub_path2 = norm_path[len("data/"):]
+            candidates.extend([
+                sub_path2,
+                f"/content/{sub_path2}",
+                f"/content/Automatic-Signature-Verification-System-ASVS-/{sub_path2}",
+            ])
+
+        for c in candidates:
+            if c and os.path.exists(c):
+                return c
         return norm_path
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
