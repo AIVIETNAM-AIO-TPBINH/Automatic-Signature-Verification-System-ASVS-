@@ -45,6 +45,7 @@ data/raw/signatures/full_forg/
 # ==============================================================================
 notebooks/03_losses_metrics_and_gradcam.ipynb
 notebooks/04_production_benchmark.ipynb
+reports/WEEK03_Losses_Risk_Metrics_and_Explainability.md
 reports/WEEK04_Final_Technical_Report.md
 src/metrics.py
 src/explainability.py
