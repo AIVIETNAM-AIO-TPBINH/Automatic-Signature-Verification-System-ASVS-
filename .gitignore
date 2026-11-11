@@ -40,16 +40,3 @@ plans/~$*
 data/raw/signatures/full_org/
 data/raw/signatures/full_forg/
 !data/raw/signatures/Readme.txt
-
-# ==============================================================================
-# Work In Progress: Tuần 3 - 4 (Lưu trữ cục bộ tại máy, giữ nguyên trên máy local)
-# ==============================================================================
-notebooks/03_losses_metrics_and_gradcam.ipynb
-notebooks/04_production_benchmark.ipynb
-reports/WEEK03_Losses_Risk_Metrics_and_Explainability.md
-reports/WEEK04_Final_Technical_Report.md
-src/metrics.py
-src/explainability.py
-app.py
-templates/
-run_web_demo.bat

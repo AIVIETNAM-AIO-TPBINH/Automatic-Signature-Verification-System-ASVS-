@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Xác Thực Chữ Ký Ngân Hàng Tự Động (ASVS)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .glow-button { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); }
+        .glow-button:hover { box-shadow: 0 0 25px rgba(16, 185, 129, 0.7); }
+    </style>
+</head>
+<body class="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto space-y-8">
+        
+        <!-- Header -->
+        <header class="glass rounded-2xl p-6 text-center sm:text-left sm:flex sm:items-center sm:justify-between border-b border-slate-700">
+            <div>
+                <div class="flex items-center space-x-3 justify-center sm:justify-start">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 flex items-center justify-center text-white shadow-lg">
+                        <i class="fa-solid fa-file-signature text-xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold tracking-tight text-white">ASVS Banking Demo</h1>
+                </div>
+                <p class="text-sm text-slate-400 mt-1">Hệ Thống Xác Thực Chữ Ký Ngân Hàng Tự Động (AIO2026 — Module 05)</p>
+            </div>
+            <div class="mt-4 sm:mt-0 flex items-center justify-center space-x-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                    <span class="w-2 h-2 mr-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    Model: ResNet-50 Discriminative FT
+                </span>
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">
+                    ImageNet-1k Pretrained
+                </span>
+            </div>
+        </header>
+
+        <!-- Quick Demo Presets (11 Scenarios) -->
+        <section class="glass rounded-2xl p-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-base font-bold uppercase tracking-wider text-slate-200 flex items-center">
+                        <i class="fa-solid fa-list-check text-amber-400 mr-2.5"></i>
+                        Bộ 11 Kịch Bản Kiểm Thử Ngân Hàng (CEDAR Benchmark):
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Chọn bất kỳ kịch bản nào dưới đây để nạp cặp chữ ký và nhận kết quả phân tích tự động tức thì</p>
+                </div>
+                <!-- Filter Pills -->
+                <div class="flex flex-wrap gap-2 text-xs">
+                    <button onclick="filterCategory('all')" id="tab-all" class="px-3 py-1.5 rounded-lg font-semibold bg-blue-600 text-white transition-all">
+                        Tất Cả (11)
+                    </button>
+                    <button onclick="filterCategory('genuine')" id="tab-genuine" class="px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all">
+                        <span class="w-2 h-2 inline-block rounded-full bg-emerald-400 mr-1.5"></span>Hợp Lệ (4)
+                    </button>
+                    <button onclick="filterCategory('skilled')" id="tab-skilled" class="px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all">
+                        <span class="w-2 h-2 inline-block rounded-full bg-rose-400 mr-1.5"></span>Giả Tinh Vi (4)
+                    </button>
+                    <button onclick="filterCategory('manual')" id="tab-manual" class="px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all">
+                        <span class="w-2 h-2 inline-block rounded-full bg-amber-400 mr-1.5"></span>Nghi Vấn KSV (1)
+                    </button>
+                    <button onclick="filterCategory('random')" id="tab-random" class="px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all">
+                        <span class="w-2 h-2 inline-block rounded-full bg-purple-400 mr-1.5"></span>Giả Ngẫu Nhiên (2)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cards Grid (11 items) -->
+            <div id="sample-cards-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                <!-- 1. Genuine 01 -->
+                <div data-cat="genuine" onclick="loadSample('genuine_01', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Hợp Lệ</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 01</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">1. Chủ TK 01 (Nét chuẩn)</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Cùng chủ TK ID 01 ký đăng ký mẫu và ký ủy nhiệm chi.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-emerald-400 font-semibold">AUTO_APPROVED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 2. Genuine 04 -->
+                <div data-cat="genuine" onclick="loadSample('genuine_04', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Hợp Lệ</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 04</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">2. Chủ TK 04 (Nét uốn lượn)</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Chữ ký hoa mỹ của chủ TK ID 04 trên 2 hợp đồng tín dụng.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-emerald-400 font-semibold">AUTO_APPROVED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 3. Genuine 08 -->
+                <div data-cat="genuine" onclick="loadSample('genuine_08', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Hợp Lệ</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 08</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">3. Chủ TK 08 (Nét thanh nét đậm)</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Chữ ký dài nhiều nét móc phức tạp của chủ TK ID 08.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-emerald-400 font-semibold">AUTO_APPROVED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 4. Genuine 10 -->
+                <div data-cat="genuine" onclick="loadSample('genuine_10', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-emerald-500/30 hover:border-emerald-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400">Hợp Lệ</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 10</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-emerald-300 transition-colors">4. Chủ TK 10 (Viết tay họ tên)</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Chữ ký viết họ tên đầy đủ, độ ổn định đường nét cao.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-emerald-400 font-semibold">AUTO_APPROVED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-emerald-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 5. Skilled 01 -->
+                <div data-cat="skilled" onclick="loadSample('skilled_01', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-rose-500/30 hover:border-rose-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400">Giả Tinh Vi</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 01</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">5. Giả tinh vi TK 01</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Kẻ gian sao chép tỉ mỉ từng nét uốn của tài khoản ID 01.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-rose-400 font-semibold">AUTO_REJECTED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-rose-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 6. Skilled 03 -->
+                <div data-cat="skilled" onclick="loadSample('skilled_03', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-rose-500/30 hover:border-rose-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400">Giả Tinh Vi</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 03</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">6. Giả tinh vi TK 03</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Nét đồ uốn lượn bị run rẩy và đứt đoạn ở các góc cua nét móc.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-rose-400 font-semibold">AUTO_REJECTED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-rose-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 7. Skilled 05 -->
+                <div data-cat="skilled" onclick="loadSample('skilled_05', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-rose-500/30 hover:border-rose-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400">Giả Tinh Vi</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 05</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">7. Giả tinh vi TK 05</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Giả mạo cấu trúc chung nhưng sai lệch góc nghiêng ngòi bút.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-rose-400 font-semibold">AUTO_REJECTED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-rose-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 8. Skilled 08 -->
+                <div data-cat="skilled" onclick="loadSample('skilled_08', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-rose-500/30 hover:border-rose-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-400">Giả Tinh Vi</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 08</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">8. Giả tinh vi TK 08</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Kẻ gian đồ lại chữ ký dài nhưng lộ sai phân áp lực mực.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-rose-400 font-semibold">AUTO_REJECTED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-rose-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 9. Manual Review 02 -->
+                <div data-cat="manual" onclick="loadSample('manual_02', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-amber-500/30 hover:border-amber-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">Nghi Vấn KSV</span>
+                            <span class="text-[10px] text-slate-400">CEDAR ID 02</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-amber-300 transition-colors">9. Biến thiên nét TK 02</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Chữ ký thật cùng chủ TK nhưng ký vội gây lệch nét (chuyển KSV).</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-amber-400 font-semibold">ESCALATE_AUDITOR</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-amber-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 10. Random 01 -->
+                <div data-cat="random" onclick="loadSample('random_01', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-purple-500/30 hover:border-purple-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400">Giả Ngẫu Nhiên</span>
+                            <span class="text-[10px] text-slate-400">ID 01 vs 02</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">10. Nhầm lẫn TK 01 vs 02</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Chữ ký của TK ID 02 ký trên hồ sơ ủy nhiệm chi của ID 01.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-purple-400 font-semibold">AUTO_REJECTED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-purple-400 transition-colors"></i>
+                    </div>
+                </div>
+
+                <!-- 11. Random 02 -->
+                <div data-cat="random" onclick="loadSample('random_02', this)" class="sample-card p-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-purple-500/30 hover:border-purple-500 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-purple-500/20 text-purple-400">Giả Ngẫu Nhiên</span>
+                            <span class="text-[10px] text-slate-400">ID 03 vs 05</span>
+                        </div>
+                        <h3 class="text-xs font-bold text-white group-hover:text-purple-300 transition-colors">11. Nhầm lẫn TK 03 vs 05</h3>
+                        <p class="text-[11px] text-slate-400 mt-1 line-clamp-2">Hai chữ ký hoàn toàn độc lập khác tác giả và bố cục nét.</p>
+                    </div>
+                    <div class="mt-2.5 pt-2 border-t border-slate-700/60 flex items-center justify-between text-[11px]">
+                        <span class="text-purple-400 font-semibold">AUTO_REJECTED</span>
+                        <i class="fa-solid fa-arrow-right text-slate-500 group-hover:text-purple-400 transition-colors"></i>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Upload & Interactive Section -->
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Reference Signature Box -->
+            <div class="glass rounded-2xl p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-base font-semibold text-slate-200 flex items-center">
+                            <i class="fa-solid fa-id-card text-emerald-400 mr-2"></i>
+                            1. Chữ Ký Mẫu Đăng Ký (I_ref)
+                        </h2>
+                        <span class="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">Hồ Sơ Gốc</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">Chữ ký mẫu lưu trong hệ thống Core Banking khi mở tài khoản.</p>
+                    
+                    <div id="ref-dropzone" onclick="document.getElementById('ref-file').click()" class="border-2 border-dashed border-slate-600 hover:border-emerald-500/60 rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-900/40 min-h-[180px] flex flex-col items-center justify-center">
+                        <img id="ref-preview" class="hidden max-h-36 max-w-full rounded object-contain mb-2" />
+                        <div id="ref-placeholder" class="text-slate-400 space-y-2">
+                            <i class="fa-regular fa-image text-3xl text-slate-500"></i>
+                            <p class="text-xs">Kéo thả ảnh hoặc <span class="text-emerald-400 font-semibold underline">Chọn tệp</span></p>
+                            <p class="text-[10px] text-slate-500">Hỗ trợ PNG, JPG, JPEG</p>
+                        </div>
+                    </div>
+                    <input type="file" id="ref-file" accept="image/*" class="hidden" onchange="handleFileSelect('ref', this.files[0])" />
+                </div>
+            </div>
+
+            <!-- Query Signature Box -->
+            <div class="glass rounded-2xl p-6 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-base font-semibold text-slate-200 flex items-center">
+                            <i class="fa-solid fa-money-check-dollar text-cyan-400 mr-2"></i>
+                            2. Chữ Ký Trên Chứng Từ (I_query)
+                        </h2>
+                        <span class="text-xs px-2 py-0.5 rounded bg-slate-700 text-slate-300">Ủy Nhiệm Chi / Séc</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-4">Chữ ký cần xác thực trên lệnh chuyển tiền tại quầy giao dịch.</p>
+                    
+                    <div id="query-dropzone" onclick="document.getElementById('query-file').click()" class="border-2 border-dashed border-slate-600 hover:border-cyan-500/60 rounded-xl p-4 text-center cursor-pointer transition-colors bg-slate-900/40 min-h-[180px] flex flex-col items-center justify-center">
+                        <img id="query-preview" class="hidden max-h-36 max-w-full rounded object-contain mb-2" />
+                        <div id="query-placeholder" class="text-slate-400 space-y-2">
+                            <i class="fa-regular fa-image text-3xl text-slate-500"></i>
+                            <p class="text-xs">Kéo thả ảnh hoặc <span class="text-cyan-400 font-semibold underline">Chọn tệp</span></p>
+                            <p class="text-[10px] text-slate-500">Hỗ trợ PNG, JPG, JPEG</p>
+                        </div>
+                    </div>
+                    <input type="file" id="query-file" accept="image/*" class="hidden" onchange="handleFileSelect('query', this.files[0])" />
+                </div>
+            </div>
+        </main>
+
+        <!-- Submit Button -->
+        <div class="text-center">
+            <button id="btn-verify" onclick="verifySignatures()" class="w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-white bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 shadow-lg glow-button transition-all duration-200 flex items-center justify-center space-x-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fa-solid fa-magnifying-glass-chart"></i>
+                <span>TIẾN HÀNH ĐỐI CHIẾU & PHÂN TÍCH RỦI RO NGÂN HÀNG</span>
+            </button>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden glass rounded-2xl p-8 text-center space-y-4">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-400"></div>
+            <p class="text-sm font-medium text-slate-300">Đang kích hoạt Preprocessing Shield, trích xuất 3 kênh và đối chiếu qua ResNet-50...</p>
+        </div>
+
+        <!-- Verification Results Dashboard -->
+        <section id="results" class="hidden glass rounded-2xl p-6 sm:p-8 space-y-6">
+            <!-- Verdict Banner -->
+            <div id="verdict-banner" class="rounded-xl p-5 border flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center space-x-4 text-center sm:text-left">
+                    <div id="verdict-icon" class="w-14 h-14 rounded-full flex items-center justify-center text-2xl shadow-inner">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2 justify-center sm:justify-start">
+                            <span id="verdict-tag" class="text-xs uppercase font-extrabold px-2.5 py-0.5 rounded-full">STATUS</span>
+                            <span id="risk-tag" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300">Risk: Low</span>
+                        </div>
+                        <h2 id="verdict-title" class="text-xl sm:text-2xl font-black mt-1 text-white">PHÁN QUYẾT HỆ THỐNG</h2>
+                        <p id="verdict-desc" class="text-xs sm:text-sm text-slate-300 mt-1">Mô tả chi tiết luồng xử lý ngân hàng.</p>
+                    </div>
+                </div>
+                <div class="text-right flex sm:flex-col items-center sm:items-end justify-between w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-700">
+                    <span class="text-xs text-slate-400">Độ trễ suy luận</span>
+                    <span id="latency-text" class="text-lg font-bold text-emerald-400">18.42 ms</span>
+                    <span class="text-[10px] text-slate-500">Chuẩn SLA &lt; 30 ms ✅</span>
+                </div>
+            </div>
+
+            <!-- Key Metric Gauges -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
+                    <span class="text-xs text-slate-400 font-medium">Điểm Tương Đồng (Similarity)</span>
+                    <div class="flex items-baseline space-x-2 mt-1">
+                        <span id="similarity-score" class="text-2xl font-extrabold text-white">97.42%</span>
+                        <span class="text-xs text-slate-500">Chuẩn 100%</span>
+                    </div>
+                    <div class="w-full bg-slate-700 rounded-full h-2 mt-2">
+                        <div id="similarity-bar" class="bg-emerald-500 h-2 rounded-full transition-all duration-500" style="width: 97%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
+                    <span class="text-xs text-slate-400 font-medium">Xác Suất Giả Mạo (Forgery Prob)</span>
+                    <div class="flex items-baseline space-x-2 mt-1">
+                        <span id="forgery-prob" class="text-2xl font-extrabold text-white">2.58%</span>
+                        <span class="text-xs text-slate-500">Ngưỡng STP: 20%</span>
+                    </div>
+                    <div class="w-full bg-slate-700 rounded-full h-2 mt-2">
+                        <div id="forgery-bar" class="bg-rose-500 h-2 rounded-full transition-all duration-500" style="width: 3%"></div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800/60 rounded-xl p-4 border border-slate-700/60">
+                    <span class="text-xs text-slate-400 font-medium">Quy Trình Xử Lý Ngân Hàng</span>
+                    <div class="mt-1">
+                        <span id="stp-status" class="text-base font-bold text-white uppercase">AUTO_APPROVED</span>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-1">Straight-Through Processing (STP)</p>
+                </div>
+            </div>
+
+            <!-- 4-Panel Visual Inspection & Grad-CAM -->
+            <div>
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-slate-300 mb-3 flex items-center">
+                    <i class="fa-solid fa-layer-group text-cyan-400 mr-2"></i>
+                    Bản Đồ Đối Chiếu Thị Giác 4 Tầng & Giải Trình Grad-CAM:
+                </h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800 text-center">
+                        <span class="text-[11px] font-semibold text-slate-400 block mb-2">1. Mẫu Gốc Tiền Xử Lý</span>
+                        <img id="ref-proc-img" class="w-full h-28 object-contain rounded bg-white p-1" />
+                    </div>
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800 text-center">
+                        <span class="text-[11px] font-semibold text-slate-400 block mb-2">2. Chứng Từ Tiền Xử Lý</span>
+                        <img id="query-proc-img" class="w-full h-28 object-contain rounded bg-white p-1" />
+                    </div>
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800 text-center">
+                        <span class="text-[11px] font-semibold text-slate-400 block mb-2">3. Kênh Sai Phân |Diff|</span>
+                        <img id="diff-img" class="w-full h-28 object-contain rounded bg-black p-1" />
+                    </div>
+                    <div class="bg-slate-900/60 rounded-xl p-3 border border-slate-800 text-center border-amber-500/40">
+                        <span class="text-[11px] font-semibold text-amber-400 block mb-2">4. Nhiệt Grad-CAM Phủ Màu</span>
+                        <img id="gradcam-img" class="w-full h-28 object-contain rounded bg-slate-950 p-1" />
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-2 text-center sm:text-left italic">
+                    * Vùng đỏ cam trên bản đồ Grad-CAM chỉ điểm các điểm uốn nét bút có độ nghi ngờ cao nhất phục vụ công tác kiểm toán nội bộ.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-xs text-slate-500 pt-4 border-t border-slate-800 space-y-1">
+            <p>Đồ Án Module 05: Deep Learning — Reusing Pretrained Models (AIO2026)</p>
+            <p>Học viên thực hiện: <span class="text-slate-400 font-semibold">Trần Phương Bình</span> | Cấu hình: ResNet-50 Discriminative Fine-tuning</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Client Logic -->
+    <script>
+        let currentRefBase64 = null;
+        let currentQueryBase64 = null;
+
+        function handleFileSelect(type, file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const b64 = e.target.result;
+                if (type === 'ref') {
+                    currentRefBase64 = b64;
+                    document.getElementById('ref-preview').src = b64;
+                    document.getElementById('ref-preview').classList.remove('hidden');
+                    document.getElementById('ref-placeholder').classList.add('hidden');
+                } else {
+                    currentQueryBase64 = b64;
+                    document.getElementById('query-preview').src = b64;
+                    document.getElementById('query-preview').classList.remove('hidden');
+                    document.getElementById('query-placeholder').classList.add('hidden');
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function filterCategory(category) {
+            const tabs = ['all', 'genuine', 'skilled', 'manual', 'random'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tab-${t}`);
+                if (!btn) return;
+                if (t === category) {
+                    btn.className = "px-3 py-1.5 rounded-lg font-semibold bg-blue-600 text-white transition-all shadow-lg shadow-blue-500/20";
+                } else {
+                    btn.className = "px-3 py-1.5 rounded-lg font-semibold bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 transition-all";
+                }
+            });
+
+            const cards = document.querySelectorAll('.sample-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-cat') === category) {
+                    card.classList.remove('hidden');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        async function loadSample(sampleType, element) {
+            // Highlight active sample card
+            document.querySelectorAll('.sample-card').forEach(c => {
+                c.classList.remove('ring-2', 'ring-blue-500', 'bg-slate-800');
+            });
+            if (element) {
+                element.classList.add('ring-2', 'ring-blue-500', 'bg-slate-800');
+            }
+
+            try {
+                const res = await fetch(`/api/sample/${sampleType}`);
+                const data = await res.json();
+                if (data.status === 'success') {
+                    currentRefBase64 = data.ref_base64;
+                    currentQueryBase64 = data.query_base64;
+
+                    document.getElementById('ref-preview').src = data.ref_base64;
+                    document.getElementById('ref-preview').classList.remove('hidden');
+                    document.getElementById('ref-placeholder').classList.add('hidden');
+
+                    document.getElementById('query-preview').src = data.query_base64;
+                    document.getElementById('query-preview').classList.remove('hidden');
+                    document.getElementById('query-placeholder').classList.add('hidden');
+
+                    // Auto verify for quick demo
+                    verifySignatures();
+                } else {
+                    alert("Không thể nạp mẫu: " + data.error);
+                }
+            } catch (err) {
+                alert("Lỗi nạp mẫu: " + err.message);
+            }
+        }
+
+        async function verifySignatures() {
+            if (!currentRefBase64 || !currentQueryBase64) {
+                alert("Vui lòng tải lên cả 2 ảnh hoặc chọn 1 kịch bản mẫu từ danh mục 11 mẫu bên trên!");
+                return;
+            }
+
+            const btn = document.getElementById('btn-verify');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+
+            btn.disabled = true;
+            loading.classList.remove('hidden');
+            results.classList.add('hidden');
+
+            try {
+                const res = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ref_base64: currentRefBase64,
+                        query_base64: currentQueryBase64
+                    })
+                });
+
+                const data = await res.json();
+                if (data.status === 'success') {
+                    displayResults(data);
+                } else {
+                    alert("Lỗi đối chiếu: " + data.error);
+                }
+            } catch (err) {
+                alert("Lỗi kết nối máy chủ: " + err.message);
+            } finally {
+                btn.disabled = false;
+                loading.classList.add('hidden');
+            }
+        }
+
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            const banner = document.getElementById('verdict-banner');
+            const icon = document.getElementById('verdict-icon');
+            const tag = document.getElementById('verdict-tag');
+            const riskTag = document.getElementById('risk-tag');
+            const title = document.getElementById('verdict-title');
+            const desc = document.getElementById('verdict-desc');
+
+            // Set colors & status
+            if (data.color === 'green') {
+                banner.className = 'rounded-xl p-5 border border-emerald-500/40 bg-emerald-950/30 flex flex-col sm:flex-row items-center justify-between gap-4';
+                icon.className = 'w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                icon.innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+                tag.className = 'text-xs uppercase font-extrabold px-2.5 py-0.5 rounded-full bg-emerald-500 text-white';
+            } else if (data.color === 'red') {
+                banner.className = 'rounded-xl p-5 border border-rose-500/40 bg-rose-950/30 flex flex-col sm:flex-row items-center justify-between gap-4';
+                icon.className = 'w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30';
+                icon.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+                tag.className = 'text-xs uppercase font-extrabold px-2.5 py-0.5 rounded-full bg-rose-500 text-white';
+            } else {
+                banner.className = 'rounded-xl p-5 border border-amber-500/40 bg-amber-950/30 flex flex-col sm:flex-row items-center justify-between gap-4';
+                icon.className = 'w-14 h-14 rounded-full flex items-center justify-center text-2xl bg-amber-500/20 text-amber-400 border border-amber-500/30';
+                icon.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i>';
+                tag.className = 'text-xs uppercase font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500 text-white';
+            }
+
+            tag.innerText = data.stp_status;
+            riskTag.innerText = `Rủi ro: ${data.risk_level}`;
+            title.innerText = data.verdict_vi;
+            desc.innerText = data.description;
+
+            document.getElementById('latency-text').innerText = `${data.latency_ms} ms`;
+            document.getElementById('similarity-score').innerText = `${data.similarity_score}%`;
+            document.getElementById('similarity-bar').style.width = `${data.similarity_score}%`;
+            document.getElementById('forgery-prob').innerText = `${data.forgery_probability}%`;
+            document.getElementById('forgery-bar').style.width = `${data.forgery_probability}%`;
+            document.getElementById('stp-status').innerText = data.stp_status;
+
+            document.getElementById('ref-proc-img').src = data.ref_processed_base64;
+            document.getElementById('query-proc-img').src = data.query_processed_base64;
+            document.getElementById('diff-img').src = data.diff_base64;
+            document.getElementById('gradcam-img').src = data.gradcam_overlay_base64 || data.query_processed_base64;
+
+            results.classList.remove('hidden');
+            results.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
