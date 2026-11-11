@@ -8,6 +8,7 @@ __pycache__/
 */.ipynb_checkpoints/*
 .pytest_cache/
 checkpoints/
+scratch/
 
 # Virtual Environments
 venv/
@@ -49,3 +50,6 @@ reports/WEEK03_Losses_Risk_Metrics_and_Explainability.md
 reports/WEEK04_Final_Technical_Report.md
 src/metrics.py
 src/explainability.py
+app.py
+templates/
+run_web_demo.bat
