@@ -170,20 +170,29 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# Model Loading & Caching
+# Model Loading & Caching (Supports Local Checkpoint & Cloud Deployment)
 # ==============================================================================
 @st.cache_resource
 def load_verification_model():
     device = get_device()
-    model = build_model("resnet50_discriminative_finetuning", pretrained=False, head_type="mlp")
     ckpt_path = BASE_DIR / "checkpoints" / "resnet50_discriminative_best.pt"
+    head_path = BASE_DIR / "assets" / "weights" / "classifier_head_best.pt"
     
     if ckpt_path.exists():
+        model = build_model("resnet50_discriminative_finetuning", pretrained=False, head_type="mlp")
         ckpt = torch.load(ckpt_path, map_location=device)
         if isinstance(ckpt, dict) and "model_state_dict" in ckpt:
             model.load_state_dict(ckpt["model_state_dict"])
         elif isinstance(ckpt, dict):
             model.load_state_dict(ckpt)
+    elif head_path.exists():
+        # Cloud deployment: Pretrained ImageNet backbone + fine-tuned classifier head
+        model = build_model("resnet50_discriminative_finetuning", pretrained=True, head_type="mlp")
+        head_sd = torch.load(head_path, map_location=device)
+        model.classifier.load_state_dict(head_sd)
+    else:
+        model = build_model("resnet50_discriminative_finetuning", pretrained=True, head_type="mlp")
+
     model.eval()
     model.to(device)
     cam = GradCAM(model)
@@ -192,73 +201,79 @@ def load_verification_model():
 model, cam_extractor, device = load_verification_model()
 
 # ==============================================================================
-# Sample Scenarios Catalog (11 Scenarios)
+# Sample Scenarios Catalog (11 Scenarios - Cloud & Local Compatible)
 # ==============================================================================
-CEDAR_DIR = BASE_DIR / "data" / "raw" / "signatures"
+def resolve_sample(name: str, folder: str = "full_org") -> str:
+    p_asset = BASE_DIR / "assets" / "demo_samples" / name
+    if p_asset.exists():
+        return str(p_asset)
+    p_cedar = BASE_DIR / "data" / "raw" / "signatures" / folder / name
+    return str(p_cedar)
+
 SAMPLES = {
     "1. [Hợp Lệ] Chủ TK 01 — Nét chuẩn mực": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_1_1.png"),
-        "query": str(CEDAR_DIR / "full_org" / "original_1_2.png"),
+        "ref": resolve_sample("original_1_1.png", "full_org"),
+        "query": resolve_sample("original_1_2.png", "full_org"),
         "type": "genuine",
         "desc": "Cùng chủ tài khoản ID 01 ký trên mẫu đăng ký và ủy nhiệm chi."
     },
     "2. [Hợp Lệ] Chủ TK 04 — Nét uốn lượn": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_4_1.png"),
-        "query": str(CEDAR_DIR / "full_org" / "original_4_2.png"),
+        "ref": resolve_sample("original_4_1.png", "full_org"),
+        "query": resolve_sample("original_4_2.png", "full_org"),
         "type": "genuine",
         "desc": "Chữ ký hoa mỹ của chủ TK ID 04 trên 2 hợp đồng tín dụng."
     },
     "3. [Hợp Lệ] Chủ TK 08 — Nét thanh nét đậm": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_8_1.png"),
-        "query": str(CEDAR_DIR / "full_org" / "original_8_2.png"),
+        "ref": resolve_sample("original_8_1.png", "full_org"),
+        "query": resolve_sample("original_8_2.png", "full_org"),
         "type": "genuine",
         "desc": "Chữ ký dài nhiều nét móc phức tạp của chủ TK ID 08."
     },
     "4. [Hợp Lệ] Chủ TK 10 — Viết tay họ tên": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_10_1.png"),
-        "query": str(CEDAR_DIR / "full_org" / "original_10_2.png"),
+        "ref": resolve_sample("original_10_1.png", "full_org"),
+        "query": resolve_sample("original_10_2.png", "full_org"),
         "type": "genuine",
         "desc": "Chữ ký viết họ tên đầy đủ, độ ổn định đường nét cao."
     },
     "5. [Giả Tinh Vi] Kẻ gian đồ nét TK 01": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_1_1.png"),
-        "query": str(CEDAR_DIR / "full_forg" / "forgeries_1_1.png"),
+        "ref": resolve_sample("original_1_1.png", "full_org"),
+        "query": resolve_sample("forgeries_1_1.png", "full_forg"),
         "type": "skilled",
         "desc": "Kẻ gian sao chép tỉ mỉ từng nét uốn của tài khoản ID 01."
     },
     "6. [Giả Tinh Vi] Kẻ gian đồ nét TK 03": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_3_1.png"),
-        "query": str(CEDAR_DIR / "full_forg" / "forgeries_3_1.png"),
+        "ref": resolve_sample("original_3_1.png", "full_org"),
+        "query": resolve_sample("forgeries_3_1.png", "full_forg"),
         "type": "skilled",
         "desc": "Nét đồ uốn lượn bị run rẩy và đứt đoạn ở các góc cua nét móc."
     },
     "7. [Giả Tinh Vi] Kẻ gian đồ nét TK 05": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_5_1.png"),
-        "query": str(CEDAR_DIR / "full_forg" / "forgeries_5_1.png"),
+        "ref": resolve_sample("original_5_1.png", "full_org"),
+        "query": resolve_sample("forgeries_5_1.png", "full_forg"),
         "type": "skilled",
         "desc": "Giả mạo cấu trúc chung nhưng sai lệch góc nghiêng ngòi bút."
     },
     "8. [Giả Tinh Vi] Kẻ gian đồ nét TK 08": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_8_1.png"),
-        "query": str(CEDAR_DIR / "full_forg" / "forgeries_8_1.png"),
+        "ref": resolve_sample("original_8_1.png", "full_org"),
+        "query": resolve_sample("forgeries_8_1.png", "full_forg"),
         "type": "skilled",
         "desc": "Kẻ gian đồ lại chữ ký dài nhưng lộ sai phân áp lực mực."
     },
     "9. [Nghi Vấn KSV] Biến thiên nét ký TK 02": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_2_1.png"),
-        "query": str(CEDAR_DIR / "full_org" / "original_2_2.png"),
+        "ref": resolve_sample("original_2_1.png", "full_org"),
+        "query": resolve_sample("original_2_2.png", "full_org"),
         "type": "manual",
         "desc": "Chữ ký thật cùng chủ TK nhưng ký vội biến thiên nét (cần KSV thẩm định)."
     },
     "10. [Giả Ngẫu Nhiên] Nhầm lẫn TK 01 vs TK 02": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_1_1.png"),
-        "query": str(CEDAR_DIR / "full_org" / "original_2_1.png"),
+        "ref": resolve_sample("original_1_1.png", "full_org"),
+        "query": resolve_sample("original_2_1.png", "full_org"),
         "type": "random",
         "desc": "Chữ ký của tài khoản ID 02 ký trên hồ sơ ủy nhiệm chi của ID 01."
     },
     "11. [Giả Ngẫu Nhiên] Nhầm lẫn TK 03 vs TK 05": {
-        "ref": str(CEDAR_DIR / "full_org" / "original_3_1.png"),
-        "query": str(CEDAR_DIR / "full_org" / "original_5_1.png"),
+        "ref": resolve_sample("original_3_1.png", "full_org"),
+        "query": resolve_sample("original_5_1.png", "full_org"),
         "type": "random",
         "desc": "Hai chữ ký hoàn toàn độc lập khác tác giả và bố cục nét."
     }
