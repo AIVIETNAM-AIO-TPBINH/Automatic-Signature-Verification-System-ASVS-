@@ -33,6 +33,7 @@ plans/~$*
 
 # Model weights
 *.pt
+!assets/weights/*.pt
 *.pth
 *.onnx
 
