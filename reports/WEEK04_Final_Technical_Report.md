@@ -177,37 +177,43 @@ $$\text{Decision}(p) = \begin{cases}
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **1. PyTorch FP32 Gốc (CPU Máy Cá Nhân)** | 261.65 ms | 221.99 ms | 448.40 ms | 511.99 ms | Chưa Đạt ❌ |
 | **2. ONNX Runtime FP32 (CPU Máy Cá Nhân)** | 108.59 ms | 107.58 ms | 112.37 ms | 135.20 ms | Tăng tốc 2.5x ⚡ |
-| **3. ONNX Runtime INT8 (Dynamic Quantization CPU)** | **88.60 ms** | **88.20 ms** | **117.00 ms** | 125.40 ms | Nén 4x (22.8MB), tăng tốc 3x ⚡ |
+| **3. ONNX Runtime INT8 (Static Quantization QDQ)** | **143.28 ms** | **139.13 ms** | **173.04 ms** | 185.20 ms | Nén 3.97x (22.8MB), tăng tốc 1.31x trên Laptop CPU ⚡ |
 | **4. Cloud Banking Server (Xeon/EPYC AVX-512 VNNI)** | **18.42 ms** | **18.15 ms** | **21.30 ms** | **24.80 ms** | **ĐẠT CHUẨN XUẤT SẮC ✅** |
 | **5. Core Banking GPU (NVIDIA T4 / TensorRT)** | **4.20 ms** | **3.95 ms** | **5.10 ms** | **6.50 ms** | **VƯỢT CHUẨN GẤP 6 LẦN 🚀** |
 
-#### Cấu trúc JSON REST API Response thực tế (2 Kịch Bản Nghiệp Vụ Đối Chứng):
+#### Cấu trúc JSON REST API Response thực tế (Kiểm thử Khách hàng Mới ID 47 - Independent Test Set):
 
-**Kịch bản 1: Giao dịch Hợp lệ (Chữ ký thật khớp mẫu đăng ký):**
+**Kịch bản 1: Giao dịch Hợp lệ (Chữ ký thật khớp mẫu đăng ký - ID 47):**
 ```json
 {
-  "transaction_id": "TX-BANK-GENUINE-001",
+  "transaction_id": "TX-BANK-GENUINE-4701",
+  "customer_id": "CEDAR-WRITER-ID-47",
+  "dataset_split": "INDEPENDENT_TEST_SET",
   "verdict": "GENUINE_APPROVED",
-  "similarity_score": 0.9742,
-  "forgery_probability": 0.0258,
+  "action": "AUTO_APPROVE_TRANSACTION",
+  "similarity_score": 0.9903,
+  "forgery_probability": 0.0097,
   "stp_status": "AUTO_APPROVED",
   "risk_level": "LOW",
-  "latency_ms": 18.42,
-  "gradcam_explanation": "data:image/png;base64,iVBORw0KGgoAAAANSUh..."
+  "latency_ms": 223.47,
+  "engine": "ONNX_RUNTIME_INT8_CPU"
 }
 ```
 
-**Kịch bản 2: Phát hiện Gian lận Tinh vi (Chữ ký giả mạo có chủ đích):**
+**Kịch bản 2: Phát hiện Gian lận Tinh vi (Chữ ký giả mạo có chủ đích - ID 47):**
 ```json
 {
-  "transaction_id": "TX-BANK-FORGERY-002",
+  "transaction_id": "TX-BANK-FORGERY-4702",
+  "customer_id": "CEDAR-WRITER-ID-47",
+  "dataset_split": "INDEPENDENT_TEST_SET",
   "verdict": "FORGERY_REJECTED",
-  "similarity_score": 0.0815,
-  "forgery_probability": 0.9185,
+  "action": "BLOCK_TRANSACTION_ALERT_FRAUD",
+  "similarity_score": 0.2898,
+  "forgery_probability": 0.7102,
   "stp_status": "AUTO_REJECTED",
   "risk_level": "CRITICAL_FRAUD",
-  "latency_ms": 19.10,
-  "gradcam_explanation": "data:image/png;base64,iVBORw0KGgoAAAANSUh..."
+  "latency_ms": 215.07,
+  "engine": "ONNX_RUNTIME_INT8_CPU"
 }
 ```
 

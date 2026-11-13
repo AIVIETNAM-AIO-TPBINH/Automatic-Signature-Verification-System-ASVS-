@@ -39,6 +39,12 @@ class GradCAM:
         self._register_hooks()
 
     def _find_last_conv_layer(self, module: nn.Module) -> nn.Module:
+        # Standard best practice for ResNet models: target the final bottleneck block or layer4
+        if hasattr(module, "backbone") and hasattr(module.backbone, "layer4"):
+            return module.backbone.layer4[-1]
+        if hasattr(module, "layer4"):
+            return module.layer4[-1]
+
         last_conv = None
         for name, m in module.named_modules():
             if isinstance(m, nn.Conv2d):
