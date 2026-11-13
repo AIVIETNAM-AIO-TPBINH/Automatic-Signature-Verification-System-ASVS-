@@ -65,10 +65,23 @@ $$\text{Decision}(p) = \begin{cases}
 \text{MANUAL\_REVIEW} & \text{nếu } 0.20 \le p \le 0.80 
 \end{cases}$$
 
-#### Hiệu quả phân tầng trên tập Validation:
-1. **Tỷ lệ tự động hóa (STP Coverage):** Đạt **$82.6\%$** tổng số giao dịch (trong đó $68.4\%$ tự động duyệt và $14.2\%$ tự động từ chối gian lận).
-2. **Độ chính xác trên luồng tự động (STP Accuracy):** Đạt **$96.8\%$**, đảm bảo an toàn tuyệt đối cho các giao dịch thông suốt.
-3. **Tỷ lệ thẩm định thủ công:** Chỉ **$17.4\%$** hồ sơ rơi vào vùng xám nghi vấn cần giao dịch viên kiểm tra lại.
+#### Phân tích hiệu quả phân tầng Straight-Through Processing (STP) minh bạch:
+
+**1. Đánh giá thực nghiệm trên tập CEDAR cân bằng (50% Thật / 50% Giả):**
+- **Tập Validation (8 Người ký ID 39–46, 4,416 cặp):**
+  - **Tỷ lệ tự động hóa (STP Coverage):** Đạt **$73.89\%$** tổng giao dịch (trong đó tự động duyệt khách thật $41.87\%$ và tự động từ chối gian lận $32.02\%$).
+  - **Độ chính xác trên luồng tự động (STP Accuracy):** Đạt **$72.51\%$** (Độ chính xác duyệt khách thật: $73.42\%$, độ chính xác chặn gian lận: $71.42\%$).
+  - **Tỷ lệ chuyển sang KSV thẩm định thủ công:** **$26.11\%$** hồ sơ rơi vào vùng nghi vấn.
+- **Tập Test Độc Lập (9 Người ký hoàn toàn mới ID 47–55, 4,968 cặp):**
+  - **Tỷ lệ tự động hóa (STP Coverage):** Đạt **$59.54\%$**.
+  - **Độ chính xác trên luồng tự động (STP Accuracy):** Đạt **$65.82\%$** (Độ chính xác duyệt khách thật: $76.41\%$, chặn gian lận: $60.48\%$).
+  - **Tỷ lệ chuyển sang KSV thẩm định thủ công:** **$40.46\%$**.
+
+**2. Mô phỏng vận hành giao dịch ngân hàng thực tế (Production Traffic Simulation - 95% Khách Thật / 5% Giả Mạo):**
+- Trong môi trường quầy giao dịch/ATM, đại đa số giao dịch phát sinh từ khách hàng thật (tỷ lệ tiên nghiệm $95\%$). Khi áp dụng bộ phân tầng $[0.20, 0.80]$ trên phân phối vận hành này:
+  - **STP Coverage:** Đạt **$77.59\%$** tổng khối lượng giao dịch.
+  - **STP Accuracy:** Đạt **$74.52\%$** trên các quyết định tự động.
+  - **Tỷ lệ thẩm định thủ công:** **$22.41\%$** giúp tối ưu hóa chi phí nhân sự kiểm soát viên mà vẫn bảo đảm rào chắn kiểm toán an toàn.
 
 ---
 

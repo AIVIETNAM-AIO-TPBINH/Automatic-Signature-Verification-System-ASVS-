@@ -18,21 +18,42 @@ from torch.optim.lr_scheduler import CosineAnnealingLR, LinearLR, SequentialLR
 from src.losses import get_loss_function
 
 try:
-    from src.metrics import evaluate_banking_metrics
+    from src.metrics import evaluate_banking_metrics, find_equal_error_rate
 except ImportError:
     def evaluate_banking_metrics(y_true: np.ndarray, y_scores: np.ndarray, threshold: float = 0.5) -> Dict[str, Any]:
-        """Fallback metric evaluator for Week 2 when advanced banking metrics module is kept local."""
+        """Fallback metric evaluator calculating continuous ranking metrics even without sklearn."""
+        y_true = np.asarray(y_true).ravel()
+        y_scores = np.asarray(y_scores).ravel()
         if len(y_true) == 0:
             return {"accuracy": 0.0, "loss": 0.0, "eer": 0.0, "macro_f1": 0.0, "roc_auc": 0.5}
         y_pred = (y_scores > threshold).astype(int)
         acc = float(np.mean(y_pred == y_true))
-        eer_approx = max(0.0, 1.0 - acc)
+        
+        # Continuous rank-based AUC calculation
+        n_pos = np.sum(y_true == 1)
+        n_neg = np.sum(y_true == 0)
+        if n_pos > 0 and n_neg > 0:
+            order = np.argsort(y_scores)
+            ranks = np.empty_like(order, dtype=float)
+            ranks[order] = np.arange(len(y_scores)) + 1
+            u_stat = np.sum(ranks[y_true == 1]) - (n_pos * (n_pos + 1)) / 2.0
+            auc = float(u_stat / (n_pos * n_neg))
+        else:
+            auc = 0.5
+
+        # Compute empirical FAR/FRR grid
+        ths = np.linspace(0.0, 1.0, 200)
+        fars = [float(np.mean(y_scores[y_true == 1] <= th)) if n_pos > 0 else 0.0 for th in ths]
+        frrs = [float(np.mean(y_scores[y_true == 0] > th)) if n_neg > 0 else 0.0 for th in ths]
+        idx = int(np.argmin(np.abs(np.array(fars) - np.array(frrs))))
+        eer = float((fars[idx] + frrs[idx]) / 2.0)
+
         return {
             "accuracy": acc,
             "loss": 0.0,
-            "eer": eer_approx,
+            "eer": eer,
             "macro_f1": acc,
-            "roc_auc": acc,
+            "roc_auc": auc,
         }
 
 
@@ -209,4 +230,19 @@ class SignatureTrainer:
                 break
 
         print(f"[+] Huấn luyện hoàn tất. Checkpoint tốt nhất tại: {self.best_checkpoint_path}")
+        if os.path.exists(self.best_checkpoint_path):
+            print(f"[*] Tự động tái nạp trọng số epoch tốt nhất từ: {self.best_checkpoint_path}")
+            ckpt = torch.load(self.best_checkpoint_path, map_location=self.device)
+            self.model.load_state_dict(ckpt["model_state_dict"])
         return self.history
+
+    def evaluate_test_set(self, test_loader: DataLoader) -> Dict[str, float]:
+        """
+        Đánh giá mô hình tốt nhất trên tập Test độc lập (Unseen Writers, ID 47-55).
+        Tự động nạp lại checkpoint có EER thấp nhất trước khi suy luận.
+        """
+        if os.path.exists(self.best_checkpoint_path):
+            ckpt = torch.load(self.best_checkpoint_path, map_location=self.device)
+            self.model.load_state_dict(ckpt["model_state_dict"])
+            print(f"[*] Đã nạp best checkpoint (Epoch {ckpt.get('epoch', '?')}) để thẩm định trên Test Set.")
+        return self.evaluate(test_loader)

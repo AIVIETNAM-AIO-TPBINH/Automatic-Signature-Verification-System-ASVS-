@@ -5,12 +5,18 @@ and batch generation for signature verification models.
 """
 
 import os
-from typing import Optional, Callable, Dict, Any, Tuple
-import pandas as pd
+import csv
+from typing import Optional, Callable, Dict, Any, Tuple, List
 import numpy as np
 from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
+
+try:
+    import pandas as pd
+    HAS_PANDAS = True
+except (ImportError, Exception):
+    HAS_PANDAS = False
 
 from src.preprocessing import (
     preprocess_single_signature,
@@ -78,7 +84,7 @@ class CEDARSignatureDataset(Dataset):
         normalize_imagenet: bool = True
     ):
         super().__init__()
-        self.df = pd.read_csv(csv_file)
+        self.records = self._load_records(csv_file)
         self.data_root = data_root or ""
         self.is_train = is_train
         self.target_size = target_size
@@ -89,8 +95,22 @@ class CEDARSignatureDataset(Dataset):
         else:
             self.augmentor = None
 
+    @staticmethod
+    def _load_records(csv_file: str) -> List[Dict[str, Any]]:
+        if HAS_PANDAS:
+            try:
+                return pd.read_csv(csv_file).to_dict("records")
+            except Exception:
+                pass
+        records = []
+        with open(csv_file, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                records.append(row)
+        return records
+
     def __len__(self) -> int:
-        return len(self.df)
+        return len(self.records)
 
     def _resolve_path(self, path_str: str) -> str:
         # Normalize Windows / POSIX slashes
@@ -123,7 +143,7 @@ class CEDARSignatureDataset(Dataset):
         return norm_path
 
     def __getitem__(self, idx: int) -> Dict[str, Any]:
-        row = self.df.iloc[idx]
+        row = self.records[idx]
         ref_path = self._resolve_path(row["ref_path"])
         query_path = self._resolve_path(row["query_path"])
         label = float(row["label"])

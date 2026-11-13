@@ -43,13 +43,13 @@ Bảng thống kê tham số được kiểm định tự động bằng lệnh 
 
 | STT | Cấu Hình Thử Nghiệm | Tổng Tham Số | Tham Số Huấn Luyện | Tỷ Lệ Trainable | Chiến Lược Tốc Độ Học & Loss | Ý Nghĩa Thực Nghiệm |
 |:---:|:---|:---:|:---:|:---:|:---|:---|
-| **1** | **MLP Baseline** (Duỗi phẳng 2D) | 100,664,833 | 100,664,833 | 100.00% | Cố định $10^{-3}$ \| BCE Loss | Chứng minh duỗi phẳng ảnh làm mất tương quan không gian 2D, bùng nổ tham số |
-| **2** | **Custom 2D-CNN** (4 Blocks Scratch) | 3,842,433 | 3,842,433 | 100.00% | Cosine Annealing $10^{-3}$ \| BCE Loss | Đánh giá giới hạn của CNN tự huấn luyện từ đầu khi thiếu tập dữ liệu lớn |
+| **1** | **MLP Baseline** (Duỗi phẳng 2D) | 77,220,353 | 77,220,353 | 100.00% | Cố định $10^{-3}$ \| BCE Loss | Chứng minh duỗi phẳng ảnh làm mất tương quan không gian 2D, bùng nổ tham số |
+| **2** | **Custom 2D-CNN** (4 Blocks Scratch) | 1,206,241 | 1,206,241 | 100.00% | Cosine Annealing $10^{-3}$ \| BCE Loss | Đánh giá giới hạn của CNN tự huấn luyện từ đầu khi thiếu tập dữ liệu lớn |
 | **3** | **ResNet-50 Feature Extraction** | 23,510,081 | **2,049** | **0.009%** | Khóa 100% Backbone \| Train Linear Head $10^{-3}$ | Đo lường hiệu năng Linear Probing nguyên bản ImageNet ($2048 \times 1 + 1 = 2049$) |
-| **4** | **ResNet-50 Partial Freezing** | 23,770,689 | 21,608,961 | 90.91% | Khóa Stage 1–2, Mở Stage 3–4 \| $10^{-4}$ | Giữ bộ lọc cạnh tầng nông, tinh chỉnh tầng sâu thích nghi hình thái chữ ký |
+| **4** | **ResNet-50 Partial Freezing** | 23,770,689 | 22,325,761 | 93.921% | Khóa Stage 1–2, Mở Stage 3–4 \| $10^{-4}$ | Giữ bộ lọc cạnh tầng nông, tinh chỉnh tầng sâu thích nghi hình thái chữ ký |
 | **5** | **ResNet-50 Discriminative FT** | 23,770,689 | 23,770,689 | 100.00% | Phân tầng 3 nhóm ($10^{-5} \to 10^{-3}$) \| Focal Loss | **Ứng viên Production 1**: Cân bằng tốc độ hội tụ và chống quên tri thức cũ |
-| **6** | **ViT-Base Feature Extraction** | 85,800,193 | **769** | **0.0009%** | Khóa 100% Transformer \| Train Linear Head $10^{-3}$ | Đo lường độ lệch miền trên kiến trúc Self-Attention ($768 \times 1 + 1 = 769$) |
-| **7** | **ViT-Base Full Fine-tuning** | 85,848,769 | 85,848,769 | 100.00% | Warmup + Cosine $10^{-5}$ \| Focal Loss | **Ứng viên Production 2**: Bắt bố cục hình học toàn cục qua cơ chế Attention |
+| **6** | **ViT-Base Feature Extraction** | 85,799,425 | **769** | **0.001%** | Khóa 100% Transformer \| Train Linear Head $10^{-3}$ | Đo lường độ lệch miền trên kiến trúc Self-Attention ($768 \times 1 + 1 = 769$) |
+| **7** | **ViT-Base Full Fine-tuning** | 85,847,937 | 85,847,937 | 100.00% | Warmup + Cosine $10^{-5}$ \| Focal Loss | **Ứng viên Production 2**: Bắt bố cục hình học toàn cục qua cơ chế Attention |
 | **8** | **Siamese ResNet-50 (Shared Backbone)** | 23,770,689 | 23,770,689 | 100.00% | Shared Backbone + Discriminative LR \| Focal Loss | **Cấu hình đối chứng kinh điển**: So sánh trực diện với giải pháp 3-kênh |
 
 ---

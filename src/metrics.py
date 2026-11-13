@@ -178,15 +178,49 @@ def compute_stp_coverage_accuracy(
 ) -> Dict[str, float]:
     """
     Simulates Straight-Through Processing (STP) in banking operations:
-    - Auto-Approved (Genuine): score < lower_th
-    - Auto-Rejected (Fraud): score > upper_th
-    - Manual Review: lower_th <= score <= upper_th
+    - Auto-Approved (Genuine): score < lower_th -> pred = 0
+    - Auto-Rejected (Fraud): score > upper_th  -> pred = 1
+    - Manual Review: lower_th <= score <= upper_th (Queued for Teller/Officer verification)
     """
     y_true = np.asarray(y_true).ravel()
     y_scores = np.asarray(y_scores).ravel()
+    n_total = len(y_true)
 
-    auto_mask = (y_scores < lower_th) | (y_scores > upper_th)
+    if n_total == 0:
+        return {
+            "stp_coverage": 0.0,
+            "stp_accuracy": 1.0,
+            "auto_approve_rate": 0.0,
+            "auto_reject_rate": 0.0,
+            "manual_review_rate": 1.0,
+            "auto_approve_accuracy": 1.0,
+            "auto_reject_accuracy": 1.0,
+            "lower_th": lower_th,
+            "upper_th": upper_th,
+        }
+
+    approve_mask = (y_scores < lower_th)
+    reject_mask = (y_scores > upper_th)
+    auto_mask = approve_mask | reject_mask
+
     coverage = float(np.mean(auto_mask))
+    manual_review_rate = float(1.0 - coverage)
+    auto_approve_rate = float(np.mean(approve_mask))
+    auto_reject_rate = float(np.mean(reject_mask))
+
+    # Auto-approve accuracy: of those auto-approved (pred=0), fraction where y_true == 0
+    n_approved = int(np.sum(approve_mask))
+    if n_approved > 0:
+        auto_approve_acc = float(np.mean(y_true[approve_mask] == 0))
+    else:
+        auto_approve_acc = 1.0
+
+    # Auto-reject accuracy: of those auto-rejected (pred=1), fraction where y_true == 1
+    n_rejected = int(np.sum(reject_mask))
+    if n_rejected > 0:
+        auto_reject_acc = float(np.mean(y_true[reject_mask] == 1))
+    else:
+        auto_reject_acc = 1.0
 
     if np.sum(auto_mask) > 0:
         auto_true = y_true[auto_mask]
@@ -196,13 +230,49 @@ def compute_stp_coverage_accuracy(
     else:
         auto_accuracy = 1.0
 
-    manual_review_rate = 1.0 - coverage
-
     return {
         "stp_coverage": coverage,
         "stp_accuracy": auto_accuracy,
+        "auto_approve_rate": auto_approve_rate,
+        "auto_reject_rate": auto_reject_rate,
         "manual_review_rate": manual_review_rate,
+        "auto_approve_accuracy": auto_approve_acc,
+        "auto_reject_accuracy": auto_reject_acc,
         "lower_th": lower_th,
         "upper_th": upper_th,
     }
+
+
+def simulate_production_traffic_stp(
+    genuine_scores: np.ndarray,
+    forged_scores: np.ndarray,
+    genuine_prior: float = 0.95,
+    lower_th: float = 0.20,
+    upper_th: float = 0.80,
+    num_samples: int = 20000,
+    random_seed: int = 42
+) -> Dict[str, float]:
+    """
+    Simulates production banking operational traffic where genuine customer transactions
+    dominate (e.g., 95% genuine, 5% forgery attempts).
+    Draws bootstrap samples from actual model prediction score pools.
+    """
+    rng = np.random.RandomState(random_seed)
+    n_genuine = int(num_samples * genuine_prior)
+    n_forged = num_samples - n_genuine
+
+    sample_gen_scores = rng.choice(genuine_scores, size=n_genuine, replace=True)
+    sample_forg_scores = rng.choice(forged_scores, size=n_forged, replace=True)
+
+    sim_y_true = np.concatenate([np.zeros(n_genuine, dtype=int), np.ones(n_forged, dtype=int)])
+    sim_scores = np.concatenate([sample_gen_scores, sample_forg_scores])
+
+    # Shuffle
+    perm = rng.permutation(num_samples)
+    sim_y_true = sim_y_true[perm]
+    sim_scores = sim_scores[perm]
+
+    metrics = compute_stp_coverage_accuracy(sim_y_true, sim_scores, lower_th, upper_th)
+    metrics["genuine_prior"] = genuine_prior
+    return metrics
 

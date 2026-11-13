@@ -415,10 +415,12 @@ class SiameseResNet50(nn.Module):
         self,
         pretrained: bool = True,
         dropout: float = 0.3,
-        head_type: str = "mlp"
+        head_type: str = "mlp",
+        combine_mode: str = "diff"
     ):
         super().__init__()
         self.head_type = head_type
+        self.combine_mode = combine_mode
         self.is_custom_fallback = False
 
         if HAS_TIMM:
@@ -437,15 +439,18 @@ class SiameseResNet50(nn.Module):
 
         self.global_pool = nn.AdaptiveAvgPool2d((1, 1)) if self.is_custom_fallback else nn.Identity()
 
+        # In enhanced Siamese mode ('diff_mult'), we concatenate absolute difference and Hadamard product
+        clf_in_features = in_features * 2 if combine_mode == "diff_mult" else in_features
+
         if head_type == "linear":
             self.classifier = nn.Sequential(
                 nn.Dropout(dropout),
-                nn.Linear(in_features, 1)
+                nn.Linear(clf_in_features, 1)
             )
         else:
             self.classifier = nn.Sequential(
                 nn.Dropout(dropout),
-                nn.Linear(in_features, 128),
+                nn.Linear(clf_in_features, 128),
                 nn.BatchNorm1d(128),
                 nn.ReLU(inplace=True),
                 nn.Dropout(dropout * 0.5),
@@ -479,9 +484,14 @@ class SiameseResNet50(nn.Module):
         f_ref = self.extract_features(x_ref)
         f_query = self.extract_features(x_query)
 
-        # Compute element-wise absolute difference in deep feature space
+        # Compute feature similarity representation
         diff = torch.abs(f_ref - f_query)
-        logits = self.classifier(diff).squeeze(-1)
+        if self.combine_mode == "diff_mult":
+            mult = f_ref * f_query
+            combined = torch.cat([diff, mult], dim=1)
+        else:
+            combined = diff
+        logits = self.classifier(combined).squeeze(-1)
         return logits
 
     def freeze_backbone(self):

@@ -12,15 +12,17 @@
 
 ### 2. Phân Tích Hình Thái Nét Chữ & Giải Mã Ảo Giác Mật Độ Mực (Ink Density Bias)
 - **Thực nghiệm đo đạc & Hiện tượng ảo giác:**
-  - Nếu chỉ tính mật độ mực thô trên toàn khung canvas ($\text{Density}_{\text{raw}} = \frac{\text{Số pixel mực}}{W \times H}$), chữ ký giả mạo cho kết quả trung bình $5.50\%$ so với $4.36\%$ của chữ ký thật (chênh lệch bề ngoài lên đến $+26.05\%$).
-  - **Bản chất kỹ thuật:** Đây là **ảo giác đo lường do khung quét ảnh** (Canvas Size Optical Illusion). Trong bộ dữ liệu CEDAR, các ảnh giả mạo có chiều cao trung bình bị cắt ngắn hơn hẳn ($303.3$ px so với $383.3$ px của ảnh thật), dẫn đến diện tích khung mẫu số nhỏ hơn đáng kể.
-- **Kiểm chứng Định lượng Khách quan:**
-  - **Số điểm mực tuyệt đối (Absolute Ink Pixels):** Chữ ký thật đạt trung bình $10,076.2$ px; chữ ký giả đạt $10,226.4$ px. Chênh lệch thực tế chỉ vỏn vẹn **+1.49%** (hoàn toàn tương đồng).
-  - **Mật độ mực trong Bounding Box sát nét chữ:** Sau khi cắt bỏ toàn bộ lề giấy thừa, mật độ nét bút của chữ ký thật là $6.86\%$, chữ ký giả là $6.99\%$ (chênh lệch **+1.87%**).
+  - *Trên mẫu đối chứng 100 ảnh đầu tiên:* Nếu chỉ tính mật độ mực thô trên toàn khung canvas ($\text{Density}_{\text{raw}} = \frac{\text{Số pixel mực}}{W \times H}$), chữ ký giả mạo cho kết quả trung bình $5.50\%$ ($626.4 \times 303.3$ px) so với $4.36\%$ ($604.5 \times 383.3$ px) của chữ ký thật (chênh lệch bề ngoài lên đến $+26.05\%$).
+  - **Bản chất kỹ thuật:** Đây là **ảo giác đo lường do khung quét ảnh** (Canvas Size Optical Illusion). Trong bộ dữ liệu CEDAR, các ảnh giả mạo có chiều cao trung bình bị cắt ngắn hơn hẳn so với ảnh thật, dẫn đến diện tích khung mẫu số nhỏ hơn đáng kể.
+- **Kiểm chứng Định lượng Khách quan trên toàn bộ 2,640 ảnh CEDAR (1,320 Thật vs 1,320 Giả):**
+  - **Kích thước khung thô:** Chữ ký thật đạt trung bình $535.7 \times 355.7$ px; chữ ký giả đạt $552.0 \times 345.2$ px.
+  - **Mật độ mực thô trên canvas:** Chữ ký thật là $3.71\%$; chữ ký giả là $3.56\%$ (chênh lệch chỉ **-3.83%**).
+  - **Số điểm mực tuyệt đối (Absolute Ink Pixels):** Chữ ký thật đạt trung bình $6,911.2$ px; chữ ký giả đạt $6,618.4$ px. Chênh lệch thực tế chỉ vỏn vẹn **-4.24%** (hoàn toàn tương đồng).
+  - **Mật độ mực trong Bounding Box sát nét chữ:** Sau khi cắt bỏ toàn bộ lề giấy thừa, mật độ nét bút của chữ ký thật là $6.70\%$, chữ ký giả là $6.21\%$ (chênh lệch **-7.41%**).
   - **Kết luận khoa học:** Bác bỏ giả thuyết suy diễn cho rằng "người giả mạo tì mạnh ngòi bút làm nét đọng mực nhiều hơn". Nét mực thực tế của chữ ký thật và chữ ký giả mạo có cùng đặc tính vật lý.
 - **Minh chứng cho tính cấp thiết của Preprocessing Shield:**
   - Sai lệch viền giấy chứng minh rằng nếu nạp trực tiếp ảnh thô vào mạng nơ-ron, mô hình sẽ bị bẫy *Shortcut Learning* (học đặc trưng lề giấy thay vì nét chữ).
-  - Do đó, bước **Auto-crop Bounding Box** và **Resize bảo toàn tỷ lệ khung hình** trong Preprocessing Shield là chốt chặn tiên quyết để chuẩn hóa dữ liệu đầu vào.
+  - Do đó, bước **Auto-crop Bounding Box**, **Binarization Otsu** và **Resize đệm trắng đối xứng $224 \times 224$** trong Preprocessing Shield là chốt chặn tiên quyết để chuẩn hóa dữ liệu đầu vào.
 
 ---
 
