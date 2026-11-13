@@ -182,16 +182,27 @@ class PretrainedCNNModel(nn.Module):
         self.head_type = head_type
         self.is_custom_fallback = False
 
+        loaded_backbone = False
         if HAS_TIMM:
-            self.backbone = timm.create_model(backbone_name, pretrained=pretrained, num_classes=0)
-            in_features = self.backbone.num_features
-        elif HAS_TORCHVISION and hasattr(tv_models, backbone_name):
-            weights = tv_models.ResNet50_Weights.DEFAULT if pretrained else None
-            full_model = getattr(tv_models, backbone_name)(weights=weights)
-            in_features = full_model.fc.in_features
-            full_model.fc = nn.Identity()
-            self.backbone = full_model
-        else:
+            try:
+                self.backbone = timm.create_model(backbone_name, pretrained=pretrained, num_classes=0)
+                in_features = self.backbone.num_features
+                loaded_backbone = True
+            except Exception as e:
+                print(f"[!] Cảnh báo timm: {e}. Đang chuyển sang torchvision fallback...")
+
+        if not loaded_backbone and HAS_TORCHVISION and hasattr(tv_models, backbone_name):
+            try:
+                weights = tv_models.ResNet50_Weights.DEFAULT if pretrained else None
+                full_model = getattr(tv_models, backbone_name)(weights=weights)
+                in_features = full_model.fc.in_features
+                full_model.fc = nn.Identity()
+                self.backbone = full_model
+                loaded_backbone = True
+            except Exception as e:
+                print(f"[!] Cảnh báo torchvision: {e}")
+
+        if not loaded_backbone:
             self.backbone = StandaloneResNet50Fallback()
             in_features = 2048
             self.is_custom_fallback = True

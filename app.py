@@ -16,7 +16,6 @@ import torch
 
 # Ensure local imports work reliably
 BASE_DIR = Path(__file__).resolve().parent
-os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["MPLCONFIGDIR"] = str(BASE_DIR / "scratch" / "matplotlib")
 os.makedirs(os.environ["MPLCONFIGDIR"], exist_ok=True)
 

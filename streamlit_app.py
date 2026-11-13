@@ -19,7 +19,6 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 # Setup environment
-os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["MPLCONFIGDIR"] = str(BASE_DIR / "scratch" / "matplotlib")
 os.makedirs(os.environ["MPLCONFIGDIR"], exist_ok=True)
 
