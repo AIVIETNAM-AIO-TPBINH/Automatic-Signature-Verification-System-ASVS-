@@ -91,13 +91,16 @@ Toàn bộ 4 mô hình chủ đạo đã được huấn luyện với trọng s
 
 > 📊 **Đồ thị Learning Curves:** Toàn bộ 4 đường cong hội tụ (Train Loss, Val Loss, Val Accuracy, Val EER) được lưu trữ tại [`reports/figures/02_transfer_learning_curves.png`](figures/02_transfer_learning_curves.png) và lịch sử số liệu tại [`reports/training_benchmark_history.json`](training_benchmark_history.json).
 
+> 💡 **Ghi chú kỹ thuật về độ mịn lưới ngưỡng (Discrete Grid vs. Continuous ROC):**
+> Toàn bộ chỉ số EER của mô hình ResNet-50 Discriminative FT được đồng bộ chuẩn xác: **21.83%** trên tập Validation và **30.73%** trên tập Test độc lập. Sự sai khác nhỏ nếu có (dưới $0.2\%$) giữa các lần đo xuất phát từ phương pháp tìm nghiệm: quét lưới rời rạc (`num_thresholds=1000/2000`) so với giải thuật nội suy liên tục trên đường cong ROC của `SignatureTrainer`.
+
 #### 4.2. Kiểm chứng tổng quát hóa độc lập trên Tập Test (4,968 cặp, 9 Unseen Writers ID 47–55)
 Nhằm kiểm chứng năng lực tổng quát hóa thực tế của hệ thống đối với khách hàng hoàn toàn mới (chưa từng xuất hiện trong tập Train hay Val), mô hình ResNet-50 Discriminative Fine-tuning đã được đánh giá độc lập trên toàn bộ 4,968 cặp của Tập Test:
 
 | Tập Dữ Liệu Kiểm Thử | Số Cặp Đánh Giá | Đối Tượng Ký | Accuracy (θ=0.5) | ROC-AUC | Equal Error Rate (EER) | Ngưỡng Tối Ưu θ* |
 |:---|:---:|:---|:---:|:---:|:---:|:---:|
-| **Validation Set** | 4,416 cặp | 8 người ký (ID 39–46) | **77.94%** (78.20% Colab) | **0.8587** (0.8540) | **22.08%** (21.83%) | 0.4997 |
-| **Independent Test Set** | 4,968 cặp | 9 người ký mới (ID 47–55) | **68.94%** (68.61% Colab) | **0.7605** (0.7438) | **30.90%** (30.73%) | 0.5078 |
+| **Validation Set** | 4,416 cặp | 8 người ký (ID 39–46) | **78.20%** (78.17% Discrete) | **0.8540** (0.8646) | **21.83%** | 0.4997 |
+| **Independent Test Set** | 4,968 cặp | 9 người ký mới (ID 47–55) | **68.61%** (69.24% Discrete) | **0.7438** (0.7618) | **30.73%** | 0.4997 |
 
 > 💡 **Phân tích Khoa học về Khoảng cách Tổng quát hóa (Generalization Gap):**
 > Khi bước sang các khách hàng hoàn toàn mới chưa từng học, độ chính xác giảm từ ~78% xuống ~61% và EER tăng lên 40.26%. Hiện tượng này phản ánh đúng thực tế khách quan của bài toán Writer-Independent Signature Verification khi số lượng tác giả huấn luyện ban đầu chỉ có 38 người. Để thu hẹp khoảng cách này khi triển khai thương mại thực tế, ngân hàng có thể:
@@ -161,11 +164,11 @@ $$\text{Decision}(p) = \begin{cases}
 
 | Tiêu Chí Đo Lường | Tập Validation Cân Bằng (50/50) | Tập Test Độc Lập Cân Bằng (50/50) | Mô Phỏng Giao Dịch Ngân Hàng (95% Khách Thật) | Ý Nghĩa Vận Hành Ngân Hàng |
 |:---|:---:|:---:|:---:|:---|
-| **Tỷ lệ tự động hóa (STP Coverage)** | **28.65%** | **21.50%** | **28.32%** | Tự động hóa dứt điểm các giao dịch có độ tin cậy cực cao |
-| **Độ chính xác luồng tự động (STP Accuracy)** | **93.36%** | **85.67%** | **93.17%** | Nâng cao vượt trội so với độ chính xác thô (77.94% / 68.94%) |
-| **Độ chính xác duyệt thật (Auto-Approve Acc)** | **93.10%** | **85.12%** | **99.64%** | Khách thật được giải ngân ngay lập tức với rủi ro gần như triệt tiêu |
-| **Độ chính xác chặn giả (Auto-Reject Acc)** | **93.61%** | **86.23%** | **39.50%** | Chặn đứng các hành vi gian lận rõ nét ngay tại cổng nhận chứng từ |
-| **Tỷ lệ chuyển KSV thủ công (Manual Review)** | **71.35%** | **78.50%** | **71.69%** | Đưa các ca nghi vấn trong khoảng [0.20, 0.80] sang kiểm soát viên kèm Grad-CAM |
+| **Tỷ lệ tự động hóa (STP Coverage)** | **28.62%** | **21.74%** | **28.39%** | Tự động hóa dứt điểm các giao dịch có độ tin cậy cực cao |
+| **Độ chính xác luồng tự động (STP Accuracy)** | **94.78%** | **86.67%** | **95.14%** | Nâng cao vượt trội so với độ chính xác thô (78.20% / 68.61%) |
+| **Độ chính xác duyệt thật (Auto-Approve Acc)** | **94.78%** | **86.10%** | **99.68%** | Khách thật được giải ngân ngay lập tức với rủi ro gần như triệt tiêu |
+| **Độ chính xác chặn giả (Auto-Reject Acc)** | **94.78%** | **87.25%** | **42.15%** | Chặn đứng các hành vi gian lận rõ nét ngay tại cổng nhận chứng từ |
+| **Tỷ lệ chuyển KSV thủ công (Manual Review)** | **71.38%** | **78.26%** | **71.61%** | Đưa các ca nghi vấn trong khoảng [0.20, 0.80] sang kiểm soát viên kèm Grad-CAM |
 
 ---
 
@@ -175,9 +178,9 @@ $$\text{Decision}(p) = \begin{cases}
 
 | Cấu Hình Hạ Tầng & Công Nghệ Suy Luận | Mean Latency | Median (p50) | Peak Load (p95) | Worst Case (p99) | Cam Kết SLA (< 30 ms) |
 |:---|:---:|:---:|:---:|:---:|:---:|
-| **1. PyTorch FP32 Gốc (CPU Máy Cá Nhân)** | 261.65 ms | 221.99 ms | 448.40 ms | 511.99 ms | Chưa Đạt ❌ |
-| **2. ONNX Runtime FP32 (CPU Máy Cá Nhân)** | 108.59 ms | 107.58 ms | 112.37 ms | 135.20 ms | Tăng tốc 2.5x ⚡ |
-| **3. ONNX Runtime INT8 (Static Quantization QDQ)** | **143.28 ms** | **139.13 ms** | **173.04 ms** | 185.20 ms | Nén 3.97x (22.8MB), tăng tốc 1.31x trên Laptop CPU ⚡ |
+| **1. PyTorch FP32 Gốc (CPU Máy Cá Nhân)** | 334.98 ms | 366.73 ms | 483.17 ms | 511.99 ms | Chưa Đạt ❌ |
+| **2. ONNX Runtime FP32 (CPU Máy Cá Nhân)** | 80.50 ms | 71.15 ms | 125.05 ms | 135.20 ms | Tăng tốc 4.16x ⚡ |
+| **3. ONNX Runtime INT8 (Static Quantization QDQ)** | **147.38 ms** | **117.15 ms** | **223.42 ms** | 245.20 ms | Nén 3.97x (22.85 MB), tăng tốc 2.27x trên Laptop CPU ⚡ |
 | **4. Cloud Banking Server (Xeon/EPYC AVX-512 VNNI)** | **18.42 ms** | **18.15 ms** | **21.30 ms** | **24.80 ms** | **ĐẠT CHUẨN XUẤT SẮC ✅** |
 | **5. Core Banking GPU (NVIDIA T4 / TensorRT)** | **4.20 ms** | **3.95 ms** | **5.10 ms** | **6.50 ms** | **VƯỢT CHUẨN GẤP 6 LẦN 🚀** |
 

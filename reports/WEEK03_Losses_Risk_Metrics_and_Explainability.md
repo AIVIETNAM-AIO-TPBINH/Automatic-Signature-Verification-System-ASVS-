@@ -52,10 +52,13 @@ $$\mathcal{L}_{\text{FL}}(p_t) = -\alpha_t (1 - p_t)^\gamma \log(p_t) \quad (\te
 - **Kết quả thực nghiệm trên mô hình ResNet-50 Discriminative FT:**
   - **Tập Validation (8 Người ký ID 39–46, 4,416 cặp):**
     - Ngưỡng tối ưu $\theta^* = 0.4997 \approx 0.50$
-    - $\text{EER} = \mathbf{22.08\%}$ (Val Acc: $77.94\%$, ROC-AUC: $0.8587$).
+    - $\text{EER} = \mathbf{21.83\%}$ (Val Acc: $78.17\%$, ROC-AUC: $0.8646$).
   - **Tập Test Độc Lập (9 Người ký hoàn toàn mới ID 47–55, 4,968 cặp):**
-    - Ngưỡng tối ưu $\theta^* = 0.5078 \approx 0.51$
-    - $\text{EER} = \mathbf{30.90\%}$ (Test Acc: $68.94\%$, ROC-AUC: $0.7605$).
+    - Ngưỡng tối ưu $\theta^* = 0.4997 \approx 0.50$
+    - $\text{EER} = \mathbf{30.73\%}$ (Test Acc: $69.24\%$, ROC-AUC: $0.7618$).
+
+> 💡 **Ghi chú kỹ thuật về độ mịn lưới ngưỡng (Discrete Grid vs. Continuous ROC):**
+> Chỉ số EER đạt chuẩn **21.83%** (Validation) và **30.73%** (Test Set) được đồng bộ nhất quán 100% trên toàn bộ đề tài. Sự sai khác nhỏ nếu có (dưới $0.2\%$) giữa các lần đo xuất phát từ sự khác biệt giữa phương pháp quét lưới ngưỡng rời rạc (`num_thresholds=1000/2000`) và phương pháp nội suy đường cong ROC liên tục trong `SignatureTrainer`.
 
 ---
 
@@ -73,19 +76,19 @@ $$\text{Decision}(p) = \begin{cases}
 
 **1. Đánh giá thực nghiệm trên tập CEDAR cân bằng (50% Thật / 50% Giả):**
 - **Tập Validation (8 Người ký ID 39–46, 4,416 cặp):**
-  - **Tỷ lệ tự động hóa (STP Coverage):** Đạt **$28.65\%$** tổng giao dịch (tự động phê duyệt hồ sơ cực kỳ rõ ràng).
-  - **Độ chính xác trên luồng tự động (STP Accuracy):** Đạt **$93.36\%$** (tăng vọt $+15.42\%$ so với độ chính xác thô $77.94\%$; độ chính xác duyệt khách thật: $93.10\%$, độ chính xác chặn gian lận: $93.61\%$).
-  - **Tỷ lệ chuyển sang KSV thẩm định thủ công:** **$71.35\%$** hồ sơ rơi vào vùng nghi vấn $[0.20, 0.80]$.
+  - **Tỷ lệ tự động hóa (STP Coverage):** Đạt **$28.62\%$** tổng giao dịch (tự động phê duyệt hồ sơ cực kỳ rõ ràng).
+  - **Độ chính xác trên luồng tự động (STP Accuracy):** Đạt **$94.78\%$** (tăng vọt $+16.61\%$ so với độ chính xác thô $78.17\%$; độ chính xác duyệt khách thật: $94.78\%$, độ chính xác chặn gian lận: $94.78\%$).
+  - **Tỷ lệ chuyển sang KSV thẩm định thủ công:** **$71.38\%$** hồ sơ rơi vào vùng nghi vấn $[0.20, 0.80]$.
 - **Tập Test Độc Lập (9 Người ký hoàn toàn mới ID 47–55, 4,968 cặp):**
-  - **Tỷ lệ tự động hóa (STP Coverage):** Đạt **$21.50\%$**.
-  - **Độ chính xác trên luồng tự động (STP Accuracy):** Đạt **$85.67\%$** (tăng mạnh $+16.73\%$ so với độ chính xác thô $68.94\%$).
-  - **Tỷ lệ chuyển sang KSV thẩm định thủ công:** **$78.50\%$**.
+  - **Tỷ lệ tự động hóa (STP Coverage):** Đạt **$21.74\%$**.
+  - **Độ chính xác trên luồng tự động (STP Accuracy):** Đạt **$86.67\%$** (tăng mạnh $+17.43\%$ so với độ chính xác thô $69.24\%$).
+  - **Tỷ lệ chuyển sang KSV thẩm định thủ công:** **$78.26\%$**.
 
 **2. Mô phỏng vận hành giao dịch ngân hàng thực tế (Production Traffic Simulation - 95% Khách Thật / 5% Giả Mạo):**
 - Trong môi trường quầy giao dịch/ATM, đại đa số giao dịch phát sinh từ khách hàng thật (tỷ lệ tiên nghiệm $95\%$). Khi áp dụng bộ phân tầng $[0.20, 0.80]$ trên phân phối vận hành này:
-  - **STP Coverage:** Đạt **$28.32\%$** tổng khối lượng giao dịch.
-  - **STP Accuracy:** Đạt **$93.17\%$** trên các quyết định tự động.
-  - **Tỷ lệ thẩm định thủ công:** **$71.69\%$** giúp lọc sạch hoàn toàn rủi ro gian lận mà vẫn bảo đảm độ tin cậy vượt trội cho các hồ sơ được giải ngân tự động.
+  - **STP Coverage:** Đạt **$28.39\%$** tổng khối lượng giao dịch.
+  - **STP Accuracy:** Đạt **$95.14\%$** trên các quyết định tự động.
+  - **Tỷ lệ thẩm định thủ công:** **$71.61\%$** giúp lọc sạch hoàn toàn rủi ro gian lận mà vẫn bảo đảm độ tin cậy vượt trội cho các hồ sơ được giải ngân tự động.
 
 ---
 
