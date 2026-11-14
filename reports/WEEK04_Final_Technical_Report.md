@@ -198,7 +198,8 @@ $$\text{Decision}(p) = \begin{cases}
   "forgery_probability": 0.0097,
   "stp_status": "AUTO_APPROVED",
   "risk_level": "LOW",
-  "latency_ms": 223.47,
+  "gradcam_overlay_base64": null,
+  "latency_ms": 161.58,
   "engine": "ONNX_RUNTIME_INT8_CPU"
 }
 ```
@@ -215,6 +216,7 @@ $$\text{Decision}(p) = \begin{cases}
   "forgery_probability": 0.7102,
   "stp_status": "ESCALATE_AUDITOR",
   "risk_level": "MEDIUM_SUSPICIOUS",
+  "gradcam_overlay_base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...[truncated]",
   "latency_ms": 149.73,
   "engine": "ONNX_RUNTIME_INT8_CPU"
 }
