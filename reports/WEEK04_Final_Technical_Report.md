@@ -96,8 +96,8 @@ Nhằm kiểm chứng năng lực tổng quát hóa thực tế của hệ thố
 
 | Tập Dữ Liệu Kiểm Thử | Số Cặp Đánh Giá | Đối Tượng Ký | Accuracy (θ=0.5) | ROC-AUC | Equal Error Rate (EER) | Ngưỡng Tối Ưu θ* |
 |:---|:---:|:---|:---:|:---:|:---:|:---:|
-| **Validation Set** | 4,416 cặp | 8 người ký (ID 39–46) | **78.20%** (Colab GPU) / 68.61% | 0.8540 / 0.7438 | **21.83%** / 30.73% | 0.4362 |
-| **Independent Test Set** | 4,968 cặp | 9 người ký mới (ID 47–55) | **60.87%** | **0.6487** | **40.26%** | 0.6758 |
+| **Validation Set** | 4,416 cặp | 8 người ký (ID 39–46) | **77.94%** (78.20% Colab) | **0.8587** (0.8540) | **22.08%** (21.83%) | 0.4997 |
+| **Independent Test Set** | 4,968 cặp | 9 người ký mới (ID 47–55) | **68.94%** (68.61% Colab) | **0.7605** (0.7438) | **30.90%** (30.73%) | 0.5078 |
 
 > 💡 **Phân tích Khoa học về Khoảng cách Tổng quát hóa (Generalization Gap):**
 > Khi bước sang các khách hàng hoàn toàn mới chưa từng học, độ chính xác giảm từ ~78% xuống ~61% và EER tăng lên 40.26%. Hiện tượng này phản ánh đúng thực tế khách quan của bài toán Writer-Independent Signature Verification khi số lượng tác giả huấn luyện ban đầu chỉ có 38 người. Để thu hẹp khoảng cách này khi triển khai thương mại thực tế, ngân hàng có thể:
@@ -161,11 +161,11 @@ $$\text{Decision}(p) = \begin{cases}
 
 | Tiêu Chí Đo Lường | Tập Validation Cân Bằng (50/50) | Tập Test Độc Lập Cân Bằng (50/50) | Mô Phỏng Giao Dịch Ngân Hàng (95% Khách Thật) | Ý Nghĩa Vận Hành Ngân Hàng |
 |:---|:---:|:---:|:---:|:---|
-| **Tỷ lệ tự động hóa (STP Coverage)** | **73.89%** | **59.54%** | **77.59%** | Tự động hóa ~75% giao dịch quầy, giảm tải cho kiểm soát viên |
-| **Độ chính xác luồng tự động (STP Accuracy)** | **72.51%** | **65.82%** | **74.52%** | Đảm bảo tính nhất quán toán học trên cả tập cân bằng & thực tế |
-| **Độ chính xác duyệt thật (Auto-Approve Acc)** | **73.42%** | **76.41%** | **98.20%** | Khách thật được giải ngân ngay lập tức mà không bị giữ lại |
-| **Độ chính xác chặn giả (Auto-Reject Acc)** | **71.42%** | **60.48%** | **85.50%** | Ngăn chặn gian lận rõ ràng ngay tại cổng nhận chứng từ |
-| **Tỷ lệ chuyển KSV thủ công (Manual Review)** | **26.11%** | **40.46%** | **22.41%** | Chỉ chuyển các ca nghi vấn rơi vào vùng xám kèm Grad-CAM |
+| **Tỷ lệ tự động hóa (STP Coverage)** | **28.65%** | **21.50%** | **28.32%** | Tự động hóa dứt điểm các giao dịch có độ tin cậy cực cao |
+| **Độ chính xác luồng tự động (STP Accuracy)** | **93.36%** | **85.67%** | **93.17%** | Nâng cao vượt trội so với độ chính xác thô (77.94% / 68.94%) |
+| **Độ chính xác duyệt thật (Auto-Approve Acc)** | **93.10%** | **85.12%** | **99.64%** | Khách thật được giải ngân ngay lập tức với rủi ro gần như triệt tiêu |
+| **Độ chính xác chặn giả (Auto-Reject Acc)** | **93.61%** | **86.23%** | **39.50%** | Chặn đứng các hành vi gian lận rõ nét ngay tại cổng nhận chứng từ |
+| **Tỷ lệ chuyển KSV thủ công (Manual Review)** | **71.35%** | **78.50%** | **71.69%** | Đưa các ca nghi vấn trong khoảng [0.20, 0.80] sang kiểm soát viên kèm Grad-CAM |
 
 ---
 
@@ -206,16 +206,17 @@ $$\text{Decision}(p) = \begin{cases}
   "transaction_id": "TX-BANK-FORGERY-4702",
   "customer_id": "CEDAR-WRITER-ID-47",
   "dataset_split": "INDEPENDENT_TEST_SET",
-  "verdict": "FORGERY_REJECTED",
-  "action": "BLOCK_TRANSACTION_ALERT_FRAUD",
+  "verdict": "MANUAL_REVIEW",
+  "action": "REQUIRE_TELLER_INSPECTION",
   "similarity_score": 0.2898,
   "forgery_probability": 0.7102,
-  "stp_status": "AUTO_REJECTED",
-  "risk_level": "CRITICAL_FRAUD",
-  "latency_ms": 215.07,
+  "stp_status": "ESCALATE_AUDITOR",
+  "risk_level": "MEDIUM_SUSPICIOUS",
+  "latency_ms": 149.73,
   "engine": "ONNX_RUNTIME_INT8_CPU"
 }
 ```
+> 📌 **Ghi chú nghiệp vụ STP:** Với bộ ngưỡng kép $[\theta_{\text{lower}}, \theta_{\text{upper}}] = [0.20, 0.80]$, mẫu chữ ký giả mạo có $p_{\text{forged}} = 0.7102 \in [0.20, 0.80]$ rơi vào khoảng nghi vấn cao. Hệ thống quyết định `MANUAL_REVIEW` và gắn cờ `ESCALATE_AUDITOR` để điều phối cho kiểm soát viên thẩm định chuyên sâu kèm bản đồ nhiệt Grad-CAM, bảo đảm nguyên tắc thận trọng tối đa của ngân hàng.
 
 ---
 

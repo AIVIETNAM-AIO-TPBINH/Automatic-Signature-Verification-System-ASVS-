@@ -75,13 +75,15 @@ from src.explainability import GradCAM
             continue
             
         code = "".join(cell.get("source", ""))
-        # Filter out bash commands like !ls, !pip or %matplotlib
+        # Filter out bash commands like !ls, !pip or %matplotlib while preserving indentation
         clean_lines = []
         for line in code.splitlines(True):
             sline = line.strip()
             if sline.startswith("!") or sline.startswith("%"):
-                continue
-            clean_lines.append(line)
+                indent = len(line) - len(line.lstrip())
+                clean_lines.append(" " * indent + "pass\n")
+            else:
+                clean_lines.append(line)
         clean_code = "".join(clean_lines)
         
         if not clean_code.strip():
